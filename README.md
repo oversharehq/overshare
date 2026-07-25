@@ -222,6 +222,7 @@ false-positive rate.
 
 | Document | What's in it |
 |---|---|
+| [PRIMER.md](PRIMER.md) | The whole system in prose — follow one scan end to end, and why it's built this way |
 | [METHODOLOGY.md](METHODOLOGY.md) | How a finding is proven, what each severity means, known blind spots, how to report a false positive |
 | [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md) | Scan what you own or have permission to test. The scan tiers and what each one requires |
 | [SECURITY.md](SECURITY.md) | Reporting a vulnerability in Overshare itself |

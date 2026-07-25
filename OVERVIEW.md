@@ -5,6 +5,7 @@ their own slice.
 
 | Read this for | File |
 |---|---|
+| **The whole system explained end to end, in prose** | **`PRIMER.md`** |
 | Using the CLI or the GitHub Action, what each check does, how to test it | `README.md` |
 | The HTTP contract between frontend and backend | `API_CONTRACT.md` |
 | How detection decides what's real, and where it's blind | `METHODOLOGY.md` |
