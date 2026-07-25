@@ -1,0 +1,46 @@
+# Scanner API.  Deploy from the repository root:  fly deploy
+#
+# The frontend is a second, separate Fly app with its own config in web/fly.toml.
+# Each config sits beside the Dockerfile and build context it belongs to, so
+# `fly deploy` needs no path flags from either directory.
+#
+# This app has no [http_service] and no public IP, on purpose. It is reachable
+# only over Fly's private network, at overshare-api.internal:8000, which is what
+# the web app proxies to. Running `fly ips allocate-v4` here would undo the
+# design: the scan API would gain a public surface of its own, and would then
+# need CORS and its own abuse controls.
+#
+# First deploy needs the volume to exist:
+#   fly volumes create overshare_data --size 1 --region syd
+
+app = "overshare-api"
+primary_region = "syd"
+
+[env]
+  OVERSHARE_HOST = "0.0.0.0"
+  OVERSHARE_PORT = "8000"
+  OVERSHARE_DB_PATH = "/data/scans.db"
+  OVERSHARE_MAX_WORKERS = "2"
+  OVERSHARE_RATE_LIMIT_PER_HOUR = "5"
+  OVERSHARE_MAX_CONCURRENT_PER_IP = "1"
+  OVERSHARE_CACHE_SECONDS = "300"
+  OVERSHARE_RETENTION_DAYS = "30"
+
+  # Safe only because nothing outside the private network can reach this app, so
+  # an outside caller cannot set X-Forwarded-For. The web proxy forwards the real
+  # client IP; without this every visitor would share a single rate-limit bucket.
+  OVERSHARE_TRUST_PROXY = "1"
+
+# SQLite on a volume, so this app is deliberately single-machine. Do not
+# `fly scale count` above 1 — two machines would each get their own volume and
+# their own half of the scans, and a poll would hit the wrong one. Moving to
+# Postgres is what unlocks scaling out; store.py was written for that swap.
+[mounts]
+  source = "overshare_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  # Scans run as separate processes now, so peak memory is roughly the API plus
+  # OVERSHARE_MAX_WORKERS interpreters. 512MB is tight at two workers.
+  memory = "1gb"
