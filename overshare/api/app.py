@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -20,6 +21,8 @@ from .worker import ScanWorker
 
 logger = logging.getLogger(__name__)
 
+PURGE_INTERVAL_SECONDS = 3600
+
 
 def _env_int(name: str, default: int) -> int:
     try:
@@ -36,6 +39,10 @@ class Settings:
     rate_limit_per_hour: int = _env_int("OVERSHARE_RATE_LIMIT_PER_HOUR", 5)
     max_concurrent_per_ip: int = _env_int("OVERSHARE_MAX_CONCURRENT_PER_IP", 1)
     cache_seconds: int = _env_int("OVERSHARE_CACHE_SECONDS", 300)
+    # Zero or less disables purging entirely, for self-hosters scanning their own
+    # apps who want unbounded history. It deliberately does not mean "expire
+    # immediately" — that reading turns a plausible misconfiguration into data loss.
+    retention_days: int = _env_int("OVERSHARE_RETENTION_DAYS", 30)
     # Only enable behind a proxy you control. X-Forwarded-For is caller-supplied,
     # so trusting it on a directly-exposed API makes rate limits bypassable by
     # anyone willing to set a header.
@@ -113,11 +120,27 @@ def create_app(
         allow_private=config.allow_private,
     )
 
+    retention_seconds = config.retention_days * 86400
+
+    async def sweep() -> None:
+        while True:
+            # to_thread: purge_expired takes the store lock and blocks.
+            purged = await asyncio.to_thread(store.purge_expired, retention_seconds)
+            if purged:
+                logger.info("purged %d scans older than %d days", purged, config.retention_days)
+            await asyncio.sleep(PURGE_INTERVAL_SECONDS)
+
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         # Anything still marked running belongs to a process that is gone.
         store.reap_orphans()
+        # Swept on a timer rather than on the request path: the delete is
+        # unbounded in size and must not sit in front of a user's scan.
+        sweeper = asyncio.create_task(sweep()) if retention_seconds > 0 else None
+        app.state.sweeper = sweeper
         yield
+        if sweeper is not None:
+            sweeper.cancel()
         worker.shutdown()
         store.close()
 

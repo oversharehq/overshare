@@ -23,6 +23,7 @@ python3 -m venv .venv
 |---|---|
 | `--json` | Machine-readable output (this is the format the API will consume) |
 | `--output FILE` | Write to a file instead of stdout |
+| `--sarif-file FILE` | *Additionally* write SARIF 2.1.0 to FILE, for GitHub code scanning |
 | `--show-info` | Include informational findings (platform fingerprint, DNS, anon key) |
 | `--no-footprint` | Skip DNS, mail auth, and certificate transparency |
 | `--no-ct` | Skip only the certificate transparency lookup (crt.sh is slow) |
@@ -31,6 +32,56 @@ python3 -m venv .venv
 | `--unsafe-allow-private-ips` | Disables SSRF protection. Local testing only. |
 
 Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` scan error.
+
+## Running it in CI
+
+Scanning once tells you about today. The point is to scan every deploy, so a
+regression is caught the day it ships rather than the day a customer finds it.
+
+```yaml
+name: Security
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'   # catches drift in things you didn't deploy: expiring
+                          # certs, DNS changes, a provider default that moved
+
+permissions:
+  contents: read
+  security-events: write  # required to publish to the Security tab
+
+jobs:
+  overshare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oversharehq/overshare@v1
+        with:
+          url: https://myapp.com
+          fail-on: high
+```
+
+Findings land in the repository's **Security** tab as code scanning alerts, with
+severity, description and remediation, and GitHub tracks each one as new, still
+open, or fixed across runs.
+
+| Input | Default | Effect |
+|---|---|---|
+| `url` | *required* | The deployed app to scan |
+| `fail-on` | `high` | Lowest severity that fails the job (`never` to report only) |
+| `sarif-file` | `overshare.sarif` | Where the SARIF report is written |
+| `upload-sarif` | `true` | Publish to code scanning. Set `false` on forks, or private repos without Advanced Security |
+| `timeout` | `10` | Per-request timeout, seconds |
+| `no-footprint` | `false` | Skip DNS, mail auth and certificate transparency |
+| `python-version` | `3.12` | Python used to run the scanner |
+
+Two behaviours worth knowing. The report is uploaded **before** the job is
+failed, so you still get the findings on the run that breaks the build. And a
+scan that could not run at all (exit `2`) fails immediately rather than
+reporting an empty, falsely clean result.
+
+**Only scan an app you own or have written permission to test.** The Action
+takes a URL, and it cannot tell whose it is.
 
 ## What it checks
 

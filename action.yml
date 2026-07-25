@@ -1,0 +1,119 @@
+name: 'Overshare'
+description: 'Scan a deployed web app for exposed secrets, source maps, readable dotfiles and missing security headers.'
+author: 'Overshare'
+
+branding:
+  icon: 'eye'
+  color: 'purple'
+
+inputs:
+  url:
+    description: 'URL of the deployed app to scan, e.g. https://myapp.com'
+    required: true
+  fail-on:
+    description: 'Lowest severity that fails the job: critical, high, medium, low, or never.'
+    required: false
+    default: 'high'
+  sarif-file:
+    description: 'Path to write the SARIF report to.'
+    required: false
+    default: 'overshare.sarif'
+  upload-sarif:
+    description: >-
+      Upload results to GitHub code scanning. Requires the job to grant
+      `security-events: write`. Set to false on a fork or a private repo without
+      Advanced Security, where the upload API is unavailable.
+    required: false
+    default: 'true'
+  timeout:
+    description: 'Per-request timeout in seconds.'
+    required: false
+    default: '10'
+  no-footprint:
+    description: 'Skip DNS, mail and certificate transparency checks.'
+    required: false
+    default: 'false'
+  python-version:
+    description: 'Python version used to run the scanner.'
+    required: false
+    default: '3.12'
+
+outputs:
+  sarif-file:
+    description: 'Path of the SARIF report that was written.'
+    value: ${{ inputs.sarif-file }}
+  exit-code:
+    description: '0 clean, 1 findings at or above fail-on, 2 the scan could not run.'
+    value: ${{ steps.scan.outputs.exit-code }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    # Installed from the action's own checkout rather than PyPI, so the scanner
+    # version is exactly the ref the workflow pinned. Nothing floats underneath a
+    # pinned action.
+    - name: Install Overshare
+      shell: bash
+      run: python -m pip install --disable-pip-version-check --quiet "$GITHUB_ACTION_PATH"
+
+    # Inputs are passed as environment variables, never interpolated into the
+    # script body: `${{ inputs.url }}` inline would let a crafted URL execute
+    # shell in the runner.
+    - name: Scan
+      id: scan
+      shell: bash
+      env:
+        OVERSHARE_URL: ${{ inputs.url }}
+        OVERSHARE_FAIL_ON: ${{ inputs.fail-on }}
+        OVERSHARE_SARIF_FILE: ${{ inputs.sarif-file }}
+        OVERSHARE_TIMEOUT: ${{ inputs.timeout }}
+        OVERSHARE_NO_FOOTPRINT: ${{ inputs.no-footprint }}
+      run: |
+        args=(
+          "$OVERSHARE_URL"
+          --fail-on "$OVERSHARE_FAIL_ON"
+          --sarif-file "$OVERSHARE_SARIF_FILE"
+          --timeout "$OVERSHARE_TIMEOUT"
+        )
+        if [ "$OVERSHARE_NO_FOOTPRINT" = "true" ]; then
+          args+=(--no-footprint)
+        fi
+
+        # GitHub runs composite bash steps with -e, which would abort here on the
+        # non-zero exit that findings produce — before the report is uploaded.
+        set +e
+        overshare "${args[@]}"
+        code=$?
+        set -e
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+
+        # Exit 2 means the scan never ran, so there is no report to upload and
+        # nothing to gate on. Fail here rather than report a misleading clean run.
+        if [ "$code" -eq 2 ]; then
+          echo "::error::Overshare could not scan $OVERSHARE_URL. Check the URL is publicly reachable."
+          exit 1
+        fi
+        exit 0
+
+    # Runs even when the scan found something, which is the whole point: gating
+    # before upload would throw away the report exactly when it matters.
+    - name: Upload SARIF to code scanning
+      if: inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: overshare
+
+    - name: Fail on findings
+      if: steps.scan.outputs.exit-code != '0'
+      shell: bash
+      env:
+        OVERSHARE_FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        echo "::error::Overshare found issues at or above severity '$OVERSHARE_FAIL_ON'. See the Security tab for details."
+        exit 1

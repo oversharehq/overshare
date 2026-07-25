@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS scans (
 );
 CREATE INDEX IF NOT EXISTS scans_client_created ON scans (client_ip, created_at);
 CREATE INDEX IF NOT EXISTS scans_url_status ON scans (url, status, completed_at);
+CREATE INDEX IF NOT EXISTS scans_created ON scans (created_at);
 """
 
 
@@ -173,6 +174,22 @@ class ScanStore:
                 (url, COMPLETE, _since(seconds)),
             ).fetchone()
         return _row_to_record(row) if row else None
+
+    def purge_expired(self, seconds: int) -> int:
+        """Delete scans past the retention window.
+
+        A stored scan is a vulnerability report about a live app, frequently one
+        the submitter does not own. Kept indefinitely the job table becomes a
+        target list, so retention is a deliberate bound rather than whatever the
+        disk happens to hold. Keyed on created_at so a row that never reached a
+        terminal status expires too.
+        """
+        with self._lock:
+            cursor = self._conn.execute(
+                "DELETE FROM scans WHERE created_at < ?", (_since(seconds),)
+            )
+            self._conn.commit()
+            return cursor.rowcount
 
     def reap_orphans(self) -> int:
         """Fail scans left running by a process that died.

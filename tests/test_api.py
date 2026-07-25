@@ -6,6 +6,8 @@ nothing touches the network.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 fastapi = pytest.importorskip("fastapi", reason="install with: pip install -e .[api]")
@@ -220,6 +222,61 @@ def test_poll_interval_stops_once_terminal(store):
 
     store.mark_complete(record.id, {"findings": []})
     assert scan_to_dict(store.get(record.id))["poll_after_ms"] == 0
+
+
+def _backdate(store: ScanStore, scan_id: str, days: int) -> None:
+    stamp = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    store._conn.execute("UPDATE scans SET created_at = ? WHERE id = ?", (stamp, scan_id))
+    store._conn.commit()
+
+
+def test_scans_past_retention_are_deleted(store):
+    old = store.create("https://old.example.com")
+    recent = store.create("https://recent.example.com")
+    store.mark_complete(old.id, {"findings": []})
+    store.mark_complete(recent.id, {"findings": []})
+    _backdate(store, old.id, 31)
+
+    assert store.purge_expired(30 * 86400) == 1
+
+    assert store.get(old.id) is None
+    assert store.get(recent.id) is not None
+
+
+def test_purge_expires_scans_that_never_finished(store):
+    # Keyed on created_at, so a row with no completed_at still expires rather
+    # than accumulating forever.
+    stuck = store.create("https://stuck.example.com")
+    _backdate(store, stuck.id, 31)
+
+    assert store.purge_expired(30 * 86400) == 1
+    assert store.get(stuck.id) is None
+
+
+def test_expired_scan_reads_as_not_found(client, store):
+    created = client.post("/v1/scans", json={"url": "https://example.com"})
+    scan_id = created.json()["id"]
+    _backdate(store, scan_id, 31)
+    store.purge_expired(30 * 86400)
+
+    response = client.get(f"/v1/scans/{scan_id}")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "scan_not_found"
+
+
+@pytest.mark.parametrize(
+    "retention_days,expected_sweeper", [(30, True), (0, False), (-1, False)]
+)
+def test_sweeper_runs_only_when_retention_is_positive(
+    store, worker, retention_days, expected_sweeper
+):
+    # Zero must mean "keep everything", not "expire everything" — someone
+    # setting it to mean "no limit" should not wipe the table.
+    settings = Settings(db_path=":memory:", retention_days=retention_days)
+    app = create_app(settings, store=store, worker=worker)
+    with TestClient(app):
+        assert (app.state.sweeper is not None) is expected_sweeper
 
 
 @pytest.mark.parametrize(

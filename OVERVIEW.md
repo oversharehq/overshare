@@ -5,7 +5,7 @@ their own slice.
 
 | Read this for | File |
 |---|---|
-| Using the CLI, what each check does, how to test it | `README.md` |
+| Using the CLI or the GitHub Action, what each check does, how to test it | `README.md` |
 | The HTTP contract between frontend and backend | `API_CONTRACT.md` |
 | Why we're building this, market, position, launch plan | `marketing/` (start at `00-strategy.md`) |
 | The original plan and legal boundaries | `overshare-build-brief.md` |
@@ -76,10 +76,15 @@ Three deployable pieces plus a strategy folder.
 
    $ overshare https://myapp.com     ← the CLI skips the API entirely
                                        and calls the scanner core directly
+
+   uses: oversharehq/overshare@v1    ← the Action is the CLI in CI: it installs
+                                       the scanner, writes SARIF, and uploads it
+                                       to GitHub code scanning (action.yml)
 ```
 
-The CLI and the web app are two front doors onto the same scanner. The CLI is the one the strategy
-cares about most.
+The CLI, the Action and the web app are three front doors onto the same scanner. The Action is the
+one the strategy cares about most — CI is the channel no competitor occupies, and a scan on every
+deploy is what makes repeat scans (the key metric) happen at all.
 
 ---
 
@@ -102,6 +107,7 @@ overshare` gives you.
 | `checks/footprint.py` | DNS, SPF/DKIM/DMARC, certificate transparency. |
 | `findings/model.py` | `Finding`, `ScanResult`, severity, scoring, redaction. |
 | `report/terminal.py` | Human-readable CLI output. |
+| `report/sarif.py` | SARIF 2.1.0, for GitHub code scanning. |
 | `cli.py` | Argument parsing, exit codes. |
 
 There are 27 distinct checks. Adding one means adding a `check_id`, which is a **stable
@@ -181,6 +187,14 @@ for frontend work without running Python. But a security scanner that quietly re
 clean results is worse than one that's down, so `lib/mock/guard.ts` returns 503 in a production
 build unless explicitly overridden, and a banner marks mock data everywhere else.
 
+**Scans expire after 30 days, and `0` means "keep everything".** A stored scan is a vulnerability
+report on a live app, often one the submitter doesn't own, so an unbounded job table is a target
+list. The sweep runs hourly on a timer rather than on the request path, because the delete is
+unbounded in size and must not sit in front of a user's scan. `OVERSHARE_RETENTION_DAYS=0`
+disables purging for self-hosters who want unbounded history — deliberately *not* read as "expire
+immediately", since that turns a plausible misconfiguration into data loss. The 30-day window is
+also the shape of the paid tier: history and deltas are what Cloud sells.
+
 **SSRF rejection happens before queueing.** `POST /v1/scans` validates the target synchronously so
 a blocked address is an immediate `422` rather than a scan that mysteriously fails later. The
 error message deliberately doesn't say *why* — the specific reason is a probe result about the
@@ -248,6 +262,7 @@ reachable from the internet.
 | `OVERSHARE_RATE_LIMIT_PER_HOUR` | `5` | Per client IP. |
 | `OVERSHARE_MAX_CONCURRENT_PER_IP` | `1` | |
 | `OVERSHARE_CACHE_SECONDS` | `300` | Repeat scan of same URL returns the cached result. |
+| `OVERSHARE_RETENTION_DAYS` | `30` | Scans older than this are deleted hourly. `0` disables purging. |
 | `OVERSHARE_TRUST_PROXY` | off | Trust `X-Forwarded-For`. Only behind a proxy you control. |
 | `OVERSHARE_UNSAFE_ALLOW_PRIVATE_IPS` | off | Disables SSRF protection. Local testing only. |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` | **Build-time.** Used by prerendered sitemap/robots/canonicals. |
@@ -255,7 +270,7 @@ reachable from the internet.
 ### Tests
 
 ```bash
-pytest            # 190 tests
+pytest            # 211 tests
 cd web && npx tsc --noEmit && npx eslint . && npm run build
 ```
 
@@ -265,9 +280,10 @@ cd web && npx tsc --noEmit && npx eslint . && npm run build
 
 | Milestone | State |
 |---|---|
-| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 190 tests. |
+| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 211 tests. |
 | **M2 — RLS check (Tier B)** | Not started. Reports currently say RLS was *not* tested. |
 | **M3 — deploy + UI** | Built, not deployed. API, frontend, Docker and compose all work end to end locally. |
+| **CI channel** | Action and SARIF done, unpublished — it needs the `oversharehq` org to be usable. |
 | **M4 — calibration** | Not started. This is the differentiator. |
 | **M5 — paid tier** | Not started. `fix` field exists in the contract and is always null. |
 
@@ -293,11 +309,6 @@ mobile app vulnerability scanner — is the closest risk. This is the only outst
 force another rename, and a security brand that rebrands mid-flight loses the trust it spent
 months building.
 
-**Scan retention is undecided, and the API already stores everything.** Every scan is persisted
-indefinitely, including scans of apps the submitter may not own. Nothing expires, nothing is
-purged. This is a live privacy exposure, not just an unanswered FAQ — the landing page has a
-visible TODO where the honest answer should go.
-
 **The GitHub org doesn't exist.** Every "View on GitHub" call to action 404s, `pip install
 overshare` isn't real yet, and the whole open-core position rests on a repo nobody can read.
 
@@ -318,7 +329,9 @@ stays true if the marker is deleted — no invented statistics — but they must
 - `METHODOLOGY.md` doesn't exist, and three marketing files link to it
 - No acceptable use policy page
 - No working email capture for the hosted waitlist
-- The retention answer above
+- The retention answer is now decided (30 days) but the landing-page TODO still needs the copy,
+  and `marketing/03-readme.md` / `04-landing-page.md` still show a raw `pip install` in a
+  workflow rather than the Action
 
 Also: `marketing/00-strategy.md §1` competitive claims come from vendor self-description and
 vendor-authored roundups. They haven't been independently checked.
@@ -330,28 +343,25 @@ vendor-authored roundups. They haven't been independently checked.
 1. **Trademark search, and buy `oversharehq.com`.** Fifteen minutes. Register PyPI and npm
    `overshare` while you're there — a package name is more painful to lose than a domain.
 
-2. **Decide retention and write the purge job.** Small change, real exposure, and it unblocks
-   honest copy.
-
-3. **Publish the repo.** Create the `oversharehq` org, push, cut a PyPI release. Everything in the
+2. **Publish the repo.** Create the `oversharehq` org, push, cut a PyPI release. Everything in the
    open-core position is downstream of this, and every GitHub link on the site is broken until it
-   happens.
+   happens. The Action cannot be used by anyone until the org exists — `oversharehq/overshare@v1`
+   is the reference in the README, so publishing also means tagging `v1`.
 
-4. **Ship the GitHub Action.** This is the actual differentiating channel — none of the competitors
-   occupy CI, and recurring CI scans are what move the metric the strategy cares about (repeat
-   scans per app after 30 days). Right now the landing page shows a raw `pip install` in a
-   workflow, which works but isn't the product.
+3. **Write the retention and CI copy.** The purge ships (30 days, hourly); the landing page still
+   has a TODO where the honest retention answer goes, and `marketing/03-readme.md` and
+   `04-landing-page.md` still show a raw `pip install` in a workflow instead of the Action.
 
-5. **M4 calibration.** 15–25 hours against 20–30 real apps, verifying every finding by hand. Write
+4. **M4 calibration.** 15–25 hours against 20–30 real apps, verifying every finding by hand. Write
    `METHODOLOGY.md` from it and publish the false-positive rate. This is the only uncontested
-   differentiator, and step 4 plus this is what the whole position rests on.
+   differentiator, and it plus the CI channel is what the whole position rests on.
 
-6. **M2 — the RLS check.** The highest-value check in the product; every Supabase report currently
+5. **M2 — the RLS check.** The highest-value check in the product; every Supabase report currently
    says it wasn't tested. Deliberately after calibration: adding a new class of detection before
    calibrating the existing ones compounds exactly the failure mode we care most about. It also
    carries the most legal sensitivity — see `overshare-build-brief.md §4`.
 
-7. **Worker isolation, then deploy.**
+6. **Worker isolation, then deploy.**
 
 Running alongside all of it: the twenty validation conversations in the build brief §11, and
 running competitors' free scans to correct the strategy doc. Neither needs code.

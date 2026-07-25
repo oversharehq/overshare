@@ -5,6 +5,7 @@ import json
 import sys
 
 from .findings.model import Severity
+from .report.sarif import render as render_sarif
 from .report.terminal import render
 from .scanner import scan
 
@@ -29,6 +30,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("url", help="Target URL, e.g. https://example.com")
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of a report")
+    # A side channel rather than an output format: CI wants the readable report
+    # in the job log *and* a SARIF file to upload, from one scan of the target.
+    parser.add_argument(
+        "--sarif-file",
+        metavar="FILE",
+        help="Also write a SARIF 2.1.0 report to FILE, for GitHub code scanning",
+    )
     parser.add_argument("--output", metavar="FILE", help="Write output to FILE")
     parser.add_argument("--show-info", action="store_true", help="Include informational findings")
     parser.add_argument("--timeout", type=float, default=10.0, help="Per-request timeout (s)")
@@ -86,6 +94,10 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if args.output:
             stream.close()
+
+    if args.sarif_file:
+        with open(args.sarif_file, "w", encoding="utf-8") as sarif_stream:
+            render_sarif(result, stream=sarif_stream, show_info=args.show_info)
 
     if result.errors and not result.findings:
         return EXIT_ERROR
