@@ -7,6 +7,10 @@ their own slice.
 |---|---|
 | Using the CLI or the GitHub Action, what each check does, how to test it | `README.md` |
 | The HTTP contract between frontend and backend | `API_CONTRACT.md` |
+| How detection decides what's real, and where it's blind | `METHODOLOGY.md` |
+| Getting it onto a server and a domain | `DEPLOY.md` |
+| Where the legal line is, for us and for users | `ACCEPTABLE_USE.md` |
+| Reporting a vulnerability in Overshare itself | `SECURITY.md` |
 | Why we're building this, market, position, launch plan | `marketing/` (start at `00-strategy.md`) |
 | The original plan and legal boundaries | `overshare-build-brief.md` |
 | Why the product is called Overshare | `marketing/01-naming.md` |
@@ -129,7 +133,7 @@ Optional. Installed with `pip install overshare[api]`, so the CLI stays dependen
 |---|---|
 | `app.py` | Routes, validation, rate limiting, settings from environment. |
 | `store.py` | SQLite job table. Create, poll, rate-limit counters, cache lookup, orphan reaping. |
-| `worker.py` | Thread pool that runs `scanner.scan()` off the request path. |
+| `worker.py` | Dispatch threads for bookkeeping; the scan itself runs in a separate process. |
 | `serialize.py` | Converts scanner output into the contract shape, and enforces the free/paid split. |
 
 A scan takes tens of seconds, so it can't happen inside an HTTP request. `POST /v1/scans` returns
@@ -194,6 +198,22 @@ unbounded in size and must not sit in front of a user's scan. `OVERSHARE_RETENTI
 disables purging for self-hosters who want unbounded history — deliberately *not* read as "expire
 immediately", since that turns a plausible misconfiguration into data loss. The 30-day window is
 also the shape of the paid tier: history and deltas are what Cloud sells.
+
+**Scans run in a separate process, and the split is deliberate.** Dispatch threads keep the
+database handle and do the bookkeeping, because that's trusted code. The scan itself is sent to a
+process pool, because it parses arbitrary JavaScript from a target we don't control. In-process, a
+segfault or a runaway allocation in a parser took the whole API with it. Only data crosses the
+boundary — the child gets a URL and returns a dict, and never holds a store handle to write
+through. `spawn`, not the platform default: the API process is threaded, and forking a threaded
+process copies its locks mid-flight and deadlocks the child. A scan is marked `running` in the
+dispatch thread rather than at submit time, because while the pool is saturated the scan really is
+still queued.
+
+**Every report ends by saying what it didn't check.** Detection is precision-first, so the errors
+this tool makes are *misses* — which means a report that lists findings and stops invites exactly
+the wrong reading of a clean result. `report/terminal.py::LIMITATIONS` names the authenticated
+surface, RLS, unrecognised key formats, server-side flaws and runtime assembly. Don't delete it to
+tidy the output.
 
 **SSRF rejection happens before queueing.** `POST /v1/scans` validates the target synchronously so
 a blocked address is an immediate `422` rather than a scan that mysteriously fails later. The
@@ -270,7 +290,7 @@ reachable from the internet.
 ### Tests
 
 ```bash
-pytest            # 211 tests
+pytest            # 221 tests
 # Build first: PageProps and RouteContext are generated into web/.next/types,
 # so type checking a clean checkout before building fails on missing globals.
 cd web && npm run build && npx tsc --noEmit && npx eslint .
@@ -282,23 +302,34 @@ cd web && npm run build && npx tsc --noEmit && npx eslint .
 
 | Milestone | State |
 |---|---|
-| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 211 tests. |
+| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 221 tests. |
 | **M2 — RLS check (Tier B)** | Not started. Reports currently say RLS was *not* tested. |
 | **M3 — deploy + UI** | Built, not deployed. API, frontend, Docker and compose all work end to end locally. |
-| **CI channel** | Action and SARIF done, unpublished — it needs the `oversharehq` org to be usable. |
+| **CI channel** | Action and SARIF done. Usable only once the repo is public and `v1` is tagged. |
 | **M4 — calibration** | Not started. This is the differentiator. |
 | **M5 — paid tier** | Not started. `fix` field exists in the contract and is always null. |
 
+**The repo exists and is private.** `oversharehq/overshare`, pushed 2026-07-25, CI green on four
+jobs (scanner on 3.11 and 3.12, frontend, and the Action running itself via `uses: ./`). Private
+on purpose until the trademark search clears: deleting an unseen private repo is free, and
+un-publishing an indexed public one is not.
+
 **Naming** was resolved on 2026-07-25: Overshare, command `overshare`, domain `oversharehq.com`,
-GitHub org `oversharehq` (plain `overshare` is taken on GitHub; free on PyPI and npm). The previous
-name was dropped over a verified same-category collision, documented in `marketing/01-naming.md`.
+GitHub org `oversharehq`. Plain `overshare` on GitHub is an org since 2013 holding OvershareKit, a
+dormant iOS library — different category, so a mild search nuisance rather than a rename trigger.
+`overshare` is free on PyPI and npm, which is what matters for a CLI. Evidence in
+`marketing/01-naming.md`.
 
 **Verified working:** CLI, API, frontend and the proxy between them, all exercised against the
 bundled vulnerable app. SSRF rejection, rate limiting, the production mock guard, and the error
-taxonomy have all been tested over HTTP.
+taxonomy have all been tested over HTTP. Process-isolated workers were verified end to end through
+the live API, and the SARIF output validates against the official 2.1.0 schema.
 
 **Not verified:** nobody has looked at the rendered UI in a browser. It builds, type-checks, lints
-and serves correct HTML, but the visual result is unconfirmed.
+and serves correct HTML, but the visual result is unconfirmed. Nothing has ever been deployed, so
+`DEPLOY.md` is written from the configs rather than from a deploy that happened — expect to correct
+it on the first run. The Action's SARIF *upload* step is also unexercised: this repo is private and
+has no Advanced Security, so the upload API is unavailable until it goes public.
 
 ---
 
@@ -311,29 +342,38 @@ mobile app vulnerability scanner — is the closest risk. This is the only outst
 force another rename, and a security brand that rebrands mid-flight loses the trust it spent
 months building.
 
-**The GitHub org doesn't exist.** Every "View on GitHub" call to action 404s, `pip install
-overshare` isn't real yet, and the whole open-core position rests on a repo nobody can read.
+**The repo is private, so every public link is dead.** "View on GitHub" 404s to anyone but you,
+`pip install overshare` isn't real, `uses: oversharehq/overshare@v1` cannot resolve, and the whole
+open-core position rests on a repo nobody can read. Flipping it public and tagging `v1` is one
+command each — it waits on the trademark search, nothing else.
 
 ### Before real traffic
 
-**Workers aren't isolated.** They run as threads inside the API process. A scan parses arbitrary
-JavaScript and fetches arbitrary URLs, so the build brief calls for a separate service with
-locked-down egress. Fine locally; not fine exposed.
+**Nothing is deployed.** Fly is chosen and configured (`fly.toml`, `web/fly.toml`, `DEPLOY.md`),
+but no account, app, volume or domain exists yet.
 
-**Nothing is deployed.** No hosting platform chosen or provisioned.
+**No egress control.** Workers now run in separate processes, which bounds a crash to one scan, but
+that is blast-radius containment and not a sandbox. Fly has no per-app outbound firewall, so what
+actually constrains where a scan can reach is the SSRF guard alone. Real egress control means
+routing worker traffic through a proxy we run. Not built — `DEPLOY.md` §"What this does not give
+you".
 
 ### Content debt
 
-Five TODO markers are visible on the landing page. They're written so the surrounding sentence
-stays true if the marker is deleted — no invented statistics — but they must not ship:
+TODO markers are visible on the landing page. They're written so the surrounding sentence stays
+true if the marker is deleted — no invented statistics — but they must not ship:
 
-- No measured false-positive rate (needs M4)
-- `METHODOLOGY.md` doesn't exist, and three marketing files link to it
-- No acceptable use policy page
-- No working email capture for the hosted waitlist
-- The retention answer is now decided (30 days) but the landing-page TODO still needs the copy,
-  and `marketing/03-readme.md` / `04-landing-page.md` still show a raw `pip install` in a
-  workflow rather than the Action
+- No measured false-positive rate (needs M4). `METHODOLOGY.md` now exists and documents the method
+  and the blind spots, with the rate itself explicitly unmeasured.
+- No page for the acceptable use policy. `ACCEPTABLE_USE.md` exists in the repo, but there's no
+  route for it in `web/` and linking to the repo 404s while it's private.
+- No working email capture for the hosted waitlist.
+- **The retention FAQ answer needs re-applying.** It was written (30 days, plus the honest note
+  that anyone can submit any URL) and then lost when a concurrent session rewrote
+  `web/app/page.tsx`. The wording survives in `ACCEPTABLE_USE.md` §"What we do with scans", so this
+  is a copy-paste, not a rewrite.
+- `marketing/03-readme.md` and `04-landing-page.md` still show a raw `pip install` in a workflow
+  rather than the Action.
 
 Also: `marketing/00-strategy.md §1` competitive claims come from vendor self-description and
 vendor-authored roundups. They haven't been independently checked.
@@ -342,31 +382,56 @@ vendor-authored roundups. They haven't been independently checked.
 
 ## 8. Next steps, in order
 
-1. **Trademark search, and buy `oversharehq.com`.** Fifteen minutes. Register PyPI and npm
-   `overshare` while you're there — a package name is more painful to lose than a domain.
+Steps 1–3 need accounts and a credit card, so they are yours and they gate everything else. They
+are also about an hour in total. Nothing downstream can start until step 1 clears.
 
-2. **Publish the repo.** Create the `oversharehq` org, push, cut a PyPI release. Everything in the
-   open-core position is downstream of this, and every GitHub link on the site is broken until it
-   happens. The Action cannot be used by anyone until the org exists — `oversharehq/overshare@v1`
-   is the reference in the README, so publishing also means tagging `v1`.
+1. **Trademark search.** IP Australia and USPTO TESS, classes 9 and 42. `Oversecured` is the
+   closest risk; add a cheap check on OvershareKit's author while you're in there. This is the only
+   remaining item that can force another rename, which is why the repo is still private.
 
-3. **Write the retention and CI copy.** The purge ships (30 days, hourly); the landing page still
-   has a TODO where the honest retention answer goes, and `marketing/03-readme.md` and
-   `04-landing-page.md` still show a raw `pip install` in a workflow instead of the Action.
+2. **Buy the names.** `oversharehq.com` (unregistered as of 2026-07-25, confirmed by RDAP), plus
+   `overshare` on PyPI and npm. A package name is more painful to lose than a domain. Cloudflare
+   Registrar sells domains at cost with free WHOIS privacy.
 
-4. **M4 calibration.** 15–25 hours against 20–30 real apps, verifying every finding by hand. Write
-   `METHODOLOGY.md` from it and publish the false-positive rate. This is the only uncontested
-   differentiator, and it plus the CI channel is what the whole position rests on.
+3. **Go public.** Flip `oversharehq/overshare` to public, tag `v1`, cut the PyPI release. Also set
+   the org's display name to `Overshare` — it's currently empty, so the profile reads
+   `oversharehq`. This is what makes the Action usable and every "View on GitHub" resolve.
 
-5. **M2 — the RLS check.** The highest-value check in the product; every Supabase report currently
+Then, in rough order of what the strategy depends on:
+
+4. **Deploy.** `DEPLOY.md` is the runbook: two Fly apps, the API private with no public address.
+   Read the "Things that will bite" section first — `NEXT_PUBLIC_SITE_URL` is baked at build time,
+   and getting it wrong publishes a live site whose sitemap advertises localhost.
+
+5. **M4 calibration.** 15–25 hours against 20–30 real apps, verifying every finding by hand, then
+   fill in the empty section of `METHODOLOGY.md` with the rate, the sample and the date. The only
+   uncontested differentiator. Note the brief splits this in two: Tier A calibrates against
+   third-party apps, but **Tier B cannot** — the RLS check may not legally be pointed at apps you
+   don't own, so it needs a corpus of 8–12 apps you build yourself with deliberately varied RLS
+   states. See `overshare-build-brief.md §4`.
+
+6. **M2 — the RLS check.** The highest-value check in the product; every Supabase report currently
    says it wasn't tested. Deliberately after calibration: adding a new class of detection before
-   calibrating the existing ones compounds exactly the failure mode we care most about. It also
-   carries the most legal sensitivity — see `overshare-build-brief.md §4`.
+   calibrating the existing ones compounds exactly the failure mode we care most about. Encode the
+   Tier B discipline structurally — a client that *cannot* issue a bulk read, rather than one that
+   merely doesn't.
 
-6. **Worker isolation, then deploy.**
+7. **Egress control**, if the hosted scan is taking real traffic by then.
 
 Running alongside all of it: the twenty validation conversations in the build brief §11, and
 running competitors' free scans to correct the strategy doc. Neither needs code.
+
+### If you want to start with code tomorrow
+
+Steps 1–3 are errands, and 4 needs an account. The first thing that is pure building is **M4
+calibration** — and it needs no infrastructure at all, just the CLI and a list of real apps:
+
+```bash
+overshare https://someapp.com --json --output runs/someapp.json
+```
+
+Every finding verified by hand, every false positive either fixed or the pattern withdrawn. It is
+the slowest item on this list and the one everything else is marketing for.
 
 ---
 
@@ -379,6 +444,12 @@ running competitors' free scans to correct the strategy doc. Neither needs code.
   needs a benign lookalike added to `BENIGN_BUNDLE` in `tests/fixtures.py`, asserting zero findings.
 - **Never run a blanket find-replace over `marketing/`.** One was run during the rename and
   corrupted `01-naming.md`, inverting the section explaining the *rejected* name.
+- **Never publish a false-positive rate that hasn't been measured.** The empty section in
+  `METHODOLOGY.md` is the point of the document, not an oversight.
+- **Check `ls -lt` before editing `web/` or `marketing/`.** Sessions run concurrently here. On
+  2026-07-25 an uncommitted edit to `web/app/page.tsx` was silently overwritten when another
+  session rewrote the file. If you must touch a shared file, commit it immediately and verify it
+  survived.
 - **Never scan an app you don't own and then contact the owner to sell them something.** It's
   extortion-shaped regardless of intent. `overshare-build-brief.md §4` is the full legal position,
   and it is not optional reading.

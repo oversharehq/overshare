@@ -211,3 +211,22 @@ flags this gap rather than implying the app is safe.
 - crt.sh throttles aggressively and often fails on a cold query. The scan
   degrades gracefully and says so rather than reporting "no subdomains".
 - Up to 25 scripts per page are scanned.
+
+Every report ends by restating these. A clean result means the public surface we
+know how to check looks right — not that the app is secure. The full account of
+what is proven, what is assumed and where the scanner is blind is in
+[METHODOLOGY.md](METHODOLOGY.md), including the deliberately empty
+false-positive rate.
+
+## Further reading
+
+| Document | What's in it |
+|---|---|
+| [METHODOLOGY.md](METHODOLOGY.md) | How a finding is proven, what each severity means, known blind spots, how to report a false positive |
+| [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md) | Scan what you own or have permission to test. The scan tiers and what each one requires |
+| [SECURITY.md](SECURITY.md) | Reporting a vulnerability in Overshare itself |
+| [DEPLOY.md](DEPLOY.md) | Running the hosted stack |
+| [OVERVIEW.md](OVERVIEW.md) | How the scanner, API, frontend and strategy fit together |
+
+**Only scan applications you own or have written permission to test.** Good
+intent is not a defence under the Australian Criminal Code Act or the US CFAA.
