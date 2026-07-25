@@ -1,0 +1,25 @@
+[project]
+name = "leakscan"
+version = "0.1.0"
+description = "Passive security scanner for AI-generated web apps (Tier A)"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "dnspython>=2.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+leakscan = "leakscan.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["leakscan*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
