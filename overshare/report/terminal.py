@@ -21,6 +21,15 @@ SEVERITY_COLOR = {
 
 GRADE_COLOR = {"A": "\033[32m", "B": "\033[32m", "C": "\033[33m", "D": "\033[31m", "F": "\033[31m"}
 
+LIMITATIONS = (
+    "Anything behind a login — the whole authenticated surface is invisible.",
+    "Credentials in formats it does not recognise. It reports only what it can prove, "
+    "so unknown key formats are missed rather than guessed at.",
+    "Row Level Security enforcement, which needs an authorised Tier B scan.",
+    "Server-side flaws: injection, broken access control, business logic.",
+    "Anything assembled at runtime — JavaScript is parsed, never executed.",
+)
+
 
 def _color_enabled(stream) -> bool:
     if os.environ.get("NO_COLOR"):
@@ -101,5 +110,19 @@ def render(result: ScanResult, stream=None, show_info: bool = False) -> None:
     hidden = len(result.findings) - len(visible)
     if hidden and not show_info:
         print(c(f" {hidden} informational finding(s) hidden. Use --show-info.", DIM), file=stream)
+
+    # Detection is precision-first, so the errors this tool makes are misses.
+    # A report that lists what it found and stops implies the rest is fine,
+    # which is the reading a clean result most invites and least deserves.
+    line()
+    print(c(" This scan did not check:", BOLD), file=stream)
+    for limitation in LIMITATIONS:
+        for i, wrapped in enumerate(textwrap.wrap(limitation, width - 6)):
+            print(f"   {'- ' if i == 0 else '  '}{wrapped}", file=stream)
+    print(
+        c("   No findings means the public surface we check looks right.", DIM),
+        file=stream,
+    )
+    print(c("   It does not mean the app is secure. METHODOLOGY.md", DIM), file=stream)
 
     line("=")
