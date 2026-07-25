@@ -1,3 +1,4 @@
+import { BRAND } from "./brand";
 import type { Scan } from "./types";
 
 /**
@@ -36,7 +37,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } catch {
     throw new ApiRequestError(
       "network_error",
-      "Could not reach LeakScan. Check your connection and try again.",
+      `Could not reach ${BRAND.name}. Check your connection and try again.`,
       0,
     );
   }

@@ -66,7 +66,7 @@ function parseTarget(raw: unknown): URL {
   ) {
     throw new MockError(
       "blocked_target",
-      "That address is on a private network, so LeakScan cannot reach it. Only publicly reachable apps can be scanned.",
+      "That address is on a private network and cannot be reached. Only publicly reachable apps can be scanned.",
       422,
     );
   }

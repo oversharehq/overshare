@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CommandBlock } from "@/components/CommandBlock";
 import { ScanForm } from "@/components/ScanForm";
+import { BRAND } from "@/lib/brand";
 import { PLATFORMS, findPlatform } from "@/lib/platforms";
 
 export function generateStaticParams() {
@@ -54,6 +56,18 @@ export default async function PlatformPage(props: PageProps<"/p/[platform]">) {
 
         <div className="mt-8">
           <ScanForm placeholder={platform.placeholder} />
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Or run it yourself
+          </p>
+          <CommandBlock
+            lines={[
+              `pip install ${BRAND.cmd}`,
+              `${BRAND.cmd} ${platform.placeholder} --fail-on high`,
+            ]}
+          />
         </div>
 
         <section className="mt-16 border-t border-slate-200 pt-10">

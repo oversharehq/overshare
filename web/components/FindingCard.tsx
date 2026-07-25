@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand";
 import { SEVERITY_STYLES } from "@/lib/severity";
 import type { Finding } from "@/lib/types";
 import { SeverityChip } from "./SeverityChip";
@@ -57,8 +58,8 @@ export function FindingCard({ finding }: { finding: Finding }) {
               {finding.evidence}
             </pre>
             <p className="mt-1 text-xs text-slate-400">
-              Secrets are truncated. LeakScan never stores or displays a full
-              credential.
+              Secrets are truncated. {BRAND.name} never stores or displays a
+              full credential.
             </p>
           </div>
         )}

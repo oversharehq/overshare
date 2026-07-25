@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BRAND, GITHUB_URL } from "@/lib/brand";
 import "./globals.css";
 
-// Domain is not settled yet (see build brief §12), so this stays configurable
-// rather than hardcoding a name that may change.
+// Domain is not settled yet (see marketing/01-naming.md §4 — availability is
+// still unverified), so this stays configurable.
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "LeakScan — security scan for AI-built apps",
-    template: "%s | LeakScan",
+    default: `${BRAND.name} — open-source security scanner for AI-built apps`,
+    template: `%s | ${BRAND.name}`,
   },
   description:
-    "Scan the public surface of an app built with Lovable, Bolt, v0 or Replit. Find exposed API keys, leaked source maps and missing security headers in about a minute.",
+    "Open-source security scanner for AI-built web apps. Paste a URL or run it in CI on every deploy. Finds exposed API keys, source maps and misconfiguration — high-confidence detection only.",
   openGraph: {
     type: "website",
-    siteName: "LeakScan",
+    siteName: BRAND.name,
     url: siteUrl,
   },
   robots: { index: true, follow: true },
@@ -37,16 +38,19 @@ export default function RootLayout({
                 L
               </span>
               <span className="text-base font-semibold tracking-tight text-slate-900">
-                LeakScan
+                {BRAND.name}
               </span>
             </Link>
             <nav className="flex items-center gap-6 text-sm text-slate-600">
               <Link href="/#checks" className="hover:text-slate-900">
-                What we check
+                What it finds
               </Link>
               <Link href="/p/lovable" className="hover:text-slate-900">
                 Platforms
               </Link>
+              <a href={GITHUB_URL} className="hover:text-slate-900">
+                GitHub
+              </a>
             </nav>
           </div>
         </header>
@@ -56,12 +60,18 @@ export default function RootLayout({
         <footer className="print-hidden mt-24 border-t border-slate-200 bg-white">
           <div className="mx-auto max-w-5xl px-6 py-10 text-sm text-slate-500">
             <p className="max-w-2xl">
-              LeakScan only requests what an app already serves to any visitor. It
-              does not attempt logins, does not modify data, and does not use
-              credentials that were not already public.
+              {BRAND.name} only requests what an app already serves to any
+              visitor. It does not attempt logins, does not modify data, and does
+              not use credentials that were not already public.
             </p>
             <p className="mt-4">
               Only scan applications you own or have written permission to test.
+            </p>
+            <p className="mt-4">
+              {BRAND.license} ·{" "}
+              <a href={GITHUB_URL} className="underline underline-offset-4">
+                Source on GitHub
+              </a>
             </p>
           </div>
         </footer>

@@ -1,0 +1,47 @@
+# Runs the whole stack locally: browser -> web -> api -> scanner.
+#
+#   docker compose up --build
+#   open http://localhost:3000
+#
+# The API deliberately publishes no port. It is reachable only from the web
+# service over the internal network, so the scan API has no public surface of its
+# own and never needs CORS.
+
+services:
+  api:
+    build: .
+    environment:
+      LEAKSCAN_DB_PATH: /data/scans.db
+      LEAKSCAN_MAX_WORKERS: "2"
+      LEAKSCAN_RATE_LIMIT_PER_HOUR: "5"
+      LEAKSCAN_MAX_CONCURRENT_PER_IP: "1"
+      LEAKSCAN_CACHE_SECONDS: "300"
+      # Safe here because nothing but `web` can reach this service, so
+      # X-Forwarded-For cannot be spoofed by an outside caller.
+      LEAKSCAN_TRUST_PROXY: "1"
+    volumes:
+      - scans:/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      args:
+        # Baked in at build time: sitemap, robots and canonical URLs are
+        # prerendered. Override for a real deployment.
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    environment:
+      LEAKSCAN_API_URL: http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  scans:
+# Known gap: scan workers run as threads inside the API process. The build brief
+# calls for isolated workers with locked-down egress, since a scan parses
+# arbitrary JavaScript and fetches arbitrary URLs. Splitting the worker into its
+# own service with its own egress policy is the next step before this faces real
+# traffic.

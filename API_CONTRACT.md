@@ -5,14 +5,19 @@
 > (`web/lib/mock.ts`). If the API needs to diverge, change this file first — both sides
 > read it.
 
-**Status:** draft for M3. Written by the frontend side; the API layer does not exist yet.
+**Status:** implemented for M3. API in `leakscan/api/`, client in `web/lib/api.ts`.
 
 - **Base path:** `/v1`
 - **Content type:** `application/json` for all requests and responses.
-- **Auth:** none in M3. The free scan requires no login by design (brief §10) — it is the funnel.
-- **CORS:** the frontend is deployed as a separate service on a different origin, so the API
-  must send `Access-Control-Allow-Origin` for the frontend origin (env-configured, not `*`,
-  once auth exists).
+- **Auth:** none in M3. The free scan requires no login by design — it is the zero-friction entry
+  point for both audiences.
+- **CORS: not needed, and the API should not add it.** The browser never talks to this API
+  directly. It calls the frontend's own origin at `/api/v1/*`, and `web/app/api/v1/[...path]`
+  proxies to `LEAKSCAN_API_URL` at request time. That keeps every call same-origin and lets the
+  API stay unpublished on the internal network (see `docker-compose.yml`).
+- **Client IP:** the proxy forwards `X-Forwarded-For` when the platform sets it. The API only
+  trusts that header when `LEAKSCAN_TRUST_PROXY=1`, because it is caller-supplied and rate
+  limiting depends on it.
 
 ---
 
@@ -133,8 +138,10 @@ verbatim, so wording lives in the backend and can change without a frontend rele
 `total` may change mid-scan (the bundle count isn't known until phase 3). The frontend
 treats progress as indicative, not a guarantee, and never blocks on it reaching `total`.
 
-**Progress is optional.** If it's more work than it's worth in M3, send `progress: null` —
-the frontend falls back to an indeterminate spinner. Do not fake percentages.
+**Progress is optional, and M3 sends `progress: null`.** `scanner.scan()` is a single blocking
+call with nothing to observe from outside, so there is no truthful phase to report. The frontend
+falls back to an indeterminate indicator. Reporting real phases means threading a callback
+through `scanner.py`; until then, do not fake percentages.
 
 ---
 
@@ -305,9 +312,21 @@ Used by the container healthcheck and the deploy platform. No auth.
 
 ---
 
-## 10. Open questions for the backend side
+## 10. Open questions
 
-- [ ] Scan retention — how long does `GET /v1/scans/{id}` resolve? Ties to the brief's open
-      question about storing results for apps the submitter may not own (§12).
-- [ ] Is the dedupe/cache window in §2 worth implementing in M3, or deferred?
-- [ ] Does `progress` land in M3, or ship `null` and add it later? Frontend works either way.
+Resolved in M3:
+
+- **Cache window** — implemented. `LEAKSCAN_CACHE_SECONDS`, default 300. A repeat scan of the
+  same URL inside the window returns `200` with the existing result instead of `202`.
+- **Progress** — ships as `null`. See §3.
+
+Still open:
+
+- [ ] **Scan retention.** The store keeps every scan indefinitely, including scans of apps the
+      submitter may not own. Nothing expires and nothing is purged. This blocks the "Will you
+      store my scan results?" answer on the landing page, and needs a decision plus a
+      `DELETE FROM scans WHERE created_at < ?` job before launch.
+- [ ] **Worker isolation.** Workers are threads inside the API process. The build brief requires
+      sandboxed workers with locked-down egress, because a scan parses arbitrary JavaScript and
+      fetches arbitrary URLs. Splitting the worker into its own service is the intended fix.
+- [ ] **Tier B.** `tier` accepts `anon_read` in the contract but the API only issues `passive`.
