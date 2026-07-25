@@ -130,12 +130,12 @@ The codebase now carries the new name throughout. Completed:
 - `README.md`, `API_CONTRACT.md`, the build brief (now `overshare-build-brief.md`), and the
   scanner's outbound `User-Agent`, which pointed at the old domain
 
-Two things this does **not** cover:
+- The checkout directory itself, now `~/overshare`. The virtualenv was rebuilt afterwards, since
+  its console-script shebangs carried the old absolute path, and `web/.next` was cleared for the
+  same reason. Anything holding the old path — a shell, an editor, a running server — needs
+  restarting.
 
-- The checkout directory is still named after the old product. Renaming it breaks running
-  sessions, so it is left for whenever the repo is next cloned fresh.
-- A stale `*.egg-info/` may linger from an earlier editable install. Harmless; cleared by a
-  reinstall.
+Nothing in the codebase still references the old name.
 
 ---
 
