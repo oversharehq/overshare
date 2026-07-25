@@ -1,7 +1,7 @@
 import type { ScanResult } from "@/lib/types";
 
 /**
- * LeakScan reports only what it can prove, which means it under-reports by
+ * Overshare reports only what it can prove, which means it under-reports by
  * design. Saying so plainly is the difference between a scanner people trust and
  * one that quietly implies "no findings" means "secure".
  */

@@ -44,7 +44,7 @@ def render(result: ScanResult, stream=None, show_info: bool = False) -> None:
     grade = result.grade()
 
     line("=")
-    print(c(f" LeakScan report: {result.url}", BOLD), file=stream)
+    print(c(f" Overshare report: {result.url}", BOLD), file=stream)
     line("=")
 
     print(

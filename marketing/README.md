@@ -24,15 +24,22 @@ Written 2026-07-25, pre-launch. Read `00-strategy.md` first — everything else 
 
 ## Naming
 
-**Decided 2026-07-25: `LeakScan` / `leakscan`.** Placeholders are gone from every file here.
-See `01-naming.md` §6 for what that commits the copy to, and §4 for the availability checks
-that have *not* been run.
+**Decided 2026-07-25: Overshare** · command `overshare` · site `oversharehq.com`.
+
+Replaces Overshare, which was dropped because `overshare.io` is a live product of that exact name in
+the same category — a trademark collision and a permanent search problem. Full evidence and the
+rejected candidates are in `01-naming.md`.
+
+Copy in `marketing/` is updated. **The codebase is not** — it still says `overshare`. See
+`01-naming.md` §7.
 
 ## Do this first
 
-- [ ] Trademark search — IP Australia and USPTO TESS, classes 9 and 42. The only check that can
-      force a rename after launch
-- [ ] Domain, PyPI, npm and GitHub org availability for `leakscan`
+- [ ] **Trademark search — IP Australia and USPTO TESS, classes 9 and 42.** Check `Oversecured`
+      hardest. The only check that can force a rename after launch, and nothing publishes until
+      it clears
+- [ ] Buy `oversharehq.com`; register PyPI + npm `overshare`; create GitHub org `oversharehq`
+- [ ] Rename the package in code, coordinating with the scanner and frontend sessions
 - [ ] Create the Reddit/HN account and start participating (30-day age gates)
 - [ ] Write `METHODOLOGY.md` — three other files link to it
 - [ ] Run competitors' free scans against your own test app and correct `00-strategy.md` §1

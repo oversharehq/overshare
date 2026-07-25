@@ -30,5 +30,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 
-# LEAKSCAN_API_URL is supplied at runtime; see .env.example.
+# OVERSHARE_API_URL is supplied at runtime; see .env.example.
 CMD ["node", "server.js"]

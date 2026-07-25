@@ -30,19 +30,19 @@ def _env_int(name: str, default: int) -> int:
 
 @dataclass
 class Settings:
-    db_path: str = os.environ.get("LEAKSCAN_DB_PATH", "leakscan-scans.db")
-    max_workers: int = _env_int("LEAKSCAN_MAX_WORKERS", 2)
-    scan_timeout: float = float(os.environ.get("LEAKSCAN_SCAN_TIMEOUT", "10"))
-    rate_limit_per_hour: int = _env_int("LEAKSCAN_RATE_LIMIT_PER_HOUR", 5)
-    max_concurrent_per_ip: int = _env_int("LEAKSCAN_MAX_CONCURRENT_PER_IP", 1)
-    cache_seconds: int = _env_int("LEAKSCAN_CACHE_SECONDS", 300)
+    db_path: str = os.environ.get("OVERSHARE_DB_PATH", "overshare-scans.db")
+    max_workers: int = _env_int("OVERSHARE_MAX_WORKERS", 2)
+    scan_timeout: float = float(os.environ.get("OVERSHARE_SCAN_TIMEOUT", "10"))
+    rate_limit_per_hour: int = _env_int("OVERSHARE_RATE_LIMIT_PER_HOUR", 5)
+    max_concurrent_per_ip: int = _env_int("OVERSHARE_MAX_CONCURRENT_PER_IP", 1)
+    cache_seconds: int = _env_int("OVERSHARE_CACHE_SECONDS", 300)
     # Only enable behind a proxy you control. X-Forwarded-For is caller-supplied,
     # so trusting it on a directly-exposed API makes rate limits bypassable by
     # anyone willing to set a header.
-    trust_proxy: bool = os.environ.get("LEAKSCAN_TRUST_PROXY") == "1"
+    trust_proxy: bool = os.environ.get("OVERSHARE_TRUST_PROXY") == "1"
     # Disables SSRF protection. Local testing against testdata/ only — mirrors
     # the CLI's --unsafe-allow-private-ips. Never set this on a public deploy.
-    allow_private: bool = os.environ.get("LEAKSCAN_UNSAFE_ALLOW_PRIVATE_IPS") == "1"
+    allow_private: bool = os.environ.get("OVERSHARE_UNSAFE_ALLOW_PRIVATE_IPS") == "1"
 
 
 def _error(code: str, message: str, status: int, headers: dict | None = None) -> JSONResponse:
@@ -101,7 +101,7 @@ def create_app(
 
     if config.allow_private:
         logger.warning(
-            "SSRF protection is DISABLED (LEAKSCAN_UNSAFE_ALLOW_PRIVATE_IPS=1). "
+            "SSRF protection is DISABLED (OVERSHARE_UNSAFE_ALLOW_PRIVATE_IPS=1). "
             "This must never be set on a publicly reachable deployment."
         )
 
@@ -122,7 +122,7 @@ def create_app(
         store.close()
 
     app = FastAPI(
-        title="LeakScan API",
+        title="Overshare API",
         version=__version__,
         lifespan=lifespan,
         docs_url="/v1/docs",

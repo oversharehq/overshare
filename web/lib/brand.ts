@@ -1,23 +1,24 @@
 /**
  * Single source of truth for the product name.
  *
- * marketing/01-naming.md argues against "LeakScan" and was overruled — the name
- * stays. Its §5 condition still applies: because "leak" is fear-register and the
- * positioning is proof, the copy has to carry the trust framing that the name
- * does not, and has to work harder to communicate that this runs continuously.
- *
- * Everything below is one find-replace if that decision is revisited.
+ * Named Overshare because it describes the actual finding: a published source
+ * map or a missing CSP is not a *leak*, but it is oversharing. See
+ * marketing/01-naming.md — the previous name was dropped over a verified
+ * same-category collision, not taste.
  */
 export const BRAND = {
-  name: "LeakScan",
+  name: "Overshare",
   /** CLI command and PyPI package. Matches [project.scripts] in pyproject.toml. */
-  cmd: "leakscan",
+  cmd: "overshare",
+  domain: "oversharehq.com",
   license: "Apache-2.0",
 } as const;
 
 /**
- * TODO(pre-launch): the repo is not published yet, so this 404s. Every "View on
- * GitHub" CTA depends on it, and marketing/01-naming.md §4 lists the GitHub org
- * as an unverified availability check.
+ * The GitHub *org* is `oversharehq`, not `overshare` — github.com/overshare is
+ * already taken. marketing/01-naming.md §5.
+ *
+ * TODO(pre-launch): the org does not exist yet, so this 404s. Every "View on
+ * GitHub" CTA depends on it.
  */
-export const GITHUB_URL = "https://github.com/leakscan/leakscan";
+export const GITHUB_URL = "https://github.com/oversharehq/overshare";

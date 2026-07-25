@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import urlsplit
 
 from ..findings.model import Confidence, Finding, Severity
 
@@ -38,18 +39,33 @@ def detect_backend(content: str) -> dict:
     return backend
 
 
+# Domains that mean the app is *hosted* by the builder. Matched against the URL
+# only: a marketing page that links to lovable.app was not built with Lovable.
+BUILDER_DOMAINS = {
+    "lovable": (".lovable.app", ".lovableproject.com"),
+    "bolt": (".bolt.new",),
+    "v0": (".v0.dev", ".v0.build"),
+    "replit": (".replit.dev", ".repl.co", ".replit.app"),
+    "base44": (".base44.app",),
+}
+
+# Artifacts a builder injects into its own output. A passing mention of the
+# product name is not one of these.
+BUILDER_ARTIFACTS = {
+    "lovable": ("cdn.gpteng.co", "gptengineer.js", "lovable-tagger"),
+    "bolt": ("webcontainer",),
+    "base44": ("base44-sdk",),
+}
+
+
 def detect_builder(content: str, url: str, headers: dict[str, str]) -> str | None:
-    haystack = f"{content}\n{url}"
-    if _any(haystack, ("lovable.app", "lovableproject.com", "gpteng.co", "lovable-tagger")):
-        return "lovable"
-    if _any(haystack, ("bolt.new", "stackblitz", "webcontainer")):
-        return "bolt"
-    if _any(haystack, ("v0.dev", "v0-")):
-        return "v0"
-    if _any(haystack, ("replit.dev", "repl.co", "replit.com")):
-        return "replit"
-    if "base44" in haystack:
-        return "base44"
+    host = (urlsplit(url).hostname or "").lower()
+    for builder, domains in BUILDER_DOMAINS.items():
+        if any(host == d.lstrip(".") or host.endswith(d) for d in domains):
+            return builder
+    for builder, artifacts in BUILDER_ARTIFACTS.items():
+        if _any(content, artifacts):
+            return builder
     return None
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from leakscan.fetch.assets import find_source_map_url, parse_assets
+from overshare.fetch.assets import find_source_map_url, parse_assets
 
 HTML = """
 <!doctype html>

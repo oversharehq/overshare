@@ -11,9 +11,9 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="install with: pip install -e .[api]")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from leakscan.api.app import Settings, create_app  # noqa: E402
-from leakscan.api.serialize import fix_available, scan_to_dict  # noqa: E402
-from leakscan.api.store import ScanStore  # noqa: E402
+from overshare.api.app import Settings, create_app  # noqa: E402
+from overshare.api.serialize import fix_available, scan_to_dict  # noqa: E402
+from overshare.api.store import ScanStore  # noqa: E402
 
 
 class RecordingWorker:

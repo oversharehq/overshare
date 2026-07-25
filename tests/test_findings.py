@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from leakscan.findings.model import (
+from overshare.findings.model import (
     Confidence,
     Finding,
     ScanResult,

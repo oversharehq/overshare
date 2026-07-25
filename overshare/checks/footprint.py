@@ -156,6 +156,7 @@ def check_certificate_transparency(domain: str, client, max_subdomains: int = 40
     """
     resp = client.try_get(CRT_SH_URL.format(domain=domain))
     if resp is None or not resp.ok:
+        status = "no response" if resp is None else f"HTTP {resp.status}"
         return [
             Finding(
                 check_id="footprint.ct.unavailable",
@@ -163,8 +164,9 @@ def check_certificate_transparency(domain: str, client, max_subdomains: int = 40
                 confidence=Confidence.CERTAIN,
                 title="Certificate transparency lookup unavailable",
                 detail="crt.sh did not return usable data, so forgotten-subdomain discovery was "
-                "skipped for this scan.",
-                evidence="crt.sh request failed",
+                "skipped. crt.sh throttles aggressively and often fails on a cold query; this "
+                "says nothing about the target.",
+                evidence=f"crt.sh returned {status}",
                 location=domain,
             )
         ]
@@ -174,11 +176,14 @@ def check_certificate_transparency(domain: str, client, max_subdomains: int = 40
     except json.JSONDecodeError:
         return []
 
+    # Match on the label boundary: "testexample.com" ends with "example.com" as a
+    # string but is a different registration entirely.
+    suffix = f".{domain}"
     names: set[str] = set()
     for entry in entries[:5000]:
         for name in str(entry.get("name_value", "")).split("\n"):
             name = name.strip().lower().lstrip("*.")
-            if name.endswith(domain) and name != domain:
+            if name.endswith(suffix):
                 names.add(name)
         if len(names) >= max_subdomains:
             break
@@ -198,7 +203,7 @@ def check_certificate_transparency(domain: str, client, max_subdomains: int = 40
 
     risky_live: list[str] = []
     for name in sorted(names):
-        label = name[: -len(domain)].rstrip(".").split(".")[-1]
+        label = name[: -len(suffix)].split(".")[-1]
         if RISKY_LABELS.match(label) and _query(name, "A"):
             risky_live.append(name)
 

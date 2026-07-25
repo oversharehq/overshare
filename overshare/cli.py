@@ -23,7 +23,7 @@ FAIL_THRESHOLDS = {
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="leakscan",
+        prog="overshare",
         description="Passive (Tier A) security scan of a public web application.",
         epilog="Only scan applications you own or have written permission to test.",
     )

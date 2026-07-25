@@ -5,20 +5,20 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    LEAKSCAN_HOST=0.0.0.0 \
-    LEAKSCAN_PORT=8000 \
-    LEAKSCAN_DB_PATH=/data/scans.db
+    OVERSHARE_HOST=0.0.0.0 \
+    OVERSHARE_PORT=8000 \
+    OVERSHARE_DB_PATH=/data/scans.db
 
 COPY pyproject.toml ./
-COPY leakscan ./leakscan
+COPY overshare ./overshare
 RUN pip install --no-cache-dir ".[api]"
 
-RUN useradd --create-home --uid 1001 leakscan \
+RUN useradd --create-home --uid 1001 overshare \
     && mkdir -p /data \
-    && chown -R leakscan:leakscan /data /app
-USER leakscan
+    && chown -R overshare:overshare /data /app
+USER overshare
 
 VOLUME ["/data"]
 EXPOSE 8000
 
-CMD ["python", "-m", "leakscan.api"]
+CMD ["python", "-m", "overshare.api"]

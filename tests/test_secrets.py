@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from leakscan.checks.secrets import decode_jwt_payload, scan_content
-from leakscan.findings.model import Severity
+from overshare.checks.secrets import decode_jwt_payload, scan_content
+from overshare.findings.model import Severity
 
 from . import fixtures as fx
 

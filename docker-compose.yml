@@ -11,14 +11,14 @@ services:
   api:
     build: .
     environment:
-      LEAKSCAN_DB_PATH: /data/scans.db
-      LEAKSCAN_MAX_WORKERS: "2"
-      LEAKSCAN_RATE_LIMIT_PER_HOUR: "5"
-      LEAKSCAN_MAX_CONCURRENT_PER_IP: "1"
-      LEAKSCAN_CACHE_SECONDS: "300"
+      OVERSHARE_DB_PATH: /data/scans.db
+      OVERSHARE_MAX_WORKERS: "2"
+      OVERSHARE_RATE_LIMIT_PER_HOUR: "5"
+      OVERSHARE_MAX_CONCURRENT_PER_IP: "1"
+      OVERSHARE_CACHE_SECONDS: "300"
       # Safe here because nothing but `web` can reach this service, so
       # X-Forwarded-For cannot be spoofed by an outside caller.
-      LEAKSCAN_TRUST_PROXY: "1"
+      OVERSHARE_TRUST_PROXY: "1"
     volumes:
       - scans:/data
     restart: unless-stopped
@@ -31,7 +31,7 @@ services:
         # prerendered. Override for a real deployment.
         NEXT_PUBLIC_SITE_URL: http://localhost:3000
     environment:
-      LEAKSCAN_API_URL: http://api:8000
+      OVERSHARE_API_URL: http://api:8000
     ports:
       - "3000:3000"
     depends_on:

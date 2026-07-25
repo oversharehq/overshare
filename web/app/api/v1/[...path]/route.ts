@@ -22,7 +22,7 @@ function jsonError(code: string, message: string, status: number): Response {
 }
 
 function upstreamBase(): string | null {
-  const base = process.env.LEAKSCAN_API_URL?.replace(/\/+$/, "");
+  const base = process.env.OVERSHARE_API_URL?.replace(/\/+$/, "");
   return base && base.length > 0 ? base : null;
 }
 
@@ -106,13 +106,13 @@ async function mock(request: Request, segments: string[]): Promise<Response> {
       }
       return Response.json(createMockScan((body as { url?: unknown })?.url), {
         status: 202,
-        headers: { "X-LeakScan-Mock": "1" },
+        headers: { "X-Overshare-Mock": "1" },
       });
     }
 
     if (segments[0] === "scans" && segments.length === 2 && request.method === "GET") {
       return Response.json(getMockScan(segments[1]), {
-        headers: { "X-LeakScan-Mock": "1" },
+        headers: { "X-Overshare-Mock": "1" },
       });
     }
   } catch (error) {

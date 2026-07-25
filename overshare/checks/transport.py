@@ -7,7 +7,7 @@ from urllib.parse import urlsplit
 
 from ..findings.model import Confidence, Finding, Severity
 
-PROBE_ORIGIN = "https://leakscan-cors-probe.invalid"
+PROBE_ORIGIN = "https://overshare-cors-probe.invalid"
 WEAK_TLS = {"SSLv2", "SSLv3", "TLSv1", "TLSv1.1"}
 
 

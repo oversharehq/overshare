@@ -2,7 +2,7 @@ import { BRAND } from "./brand";
 import type { Scan } from "./types";
 
 /**
- * Always same-origin. app/api/v1/[...path] proxies to LEAKSCAN_API_URL at request
+ * Always same-origin. app/api/v1/[...path] proxies to OVERSHARE_API_URL at request
  * time, so the backend location stays a runtime env var and no CORS is involved.
  */
 const BASE = "/api/v1";

@@ -10,13 +10,14 @@ belongs in `CONTRIBUTING.md`.
 What's preserved from the current version: the calibration paragraph, the SSRF design note, the
 RLS-gap honesty, and the known limitations. Those are the credibility.
 
-Replace `LeakScan` / `leakscan` before publishing. Do not publish until the acceptable-use policy
-and `SECURITY.md` exist (`00-strategy.md` §9).
+The package must actually be renamed to `overshare` first — the codebase still carries the old
+name (`01-naming.md` §7). Do not publish until the acceptable-use policy and `SECURITY.md` exist
+(`00-strategy.md` §9), or before the trademark search clears.
 
 ---
 
 ```markdown
-# LeakScan
+# Overshare
 
 **Find out what your AI-built app is showing the public — on every deploy.**
 
@@ -33,14 +34,14 @@ ignored *less*, not to report more.
 ## Quick start
 
 ```bash
-pip install leakscan
-leakscan https://myapp.com
+pip install overshare
+overshare https://myapp.com
 ```
 
 That's it. No account, no API key, no signup.
 
 ```
-leakscan https://myapp.com
+overshare https://myapp.com
 
   Score 34  Grade D                     supabase · lovable · next.js
 
@@ -66,8 +67,8 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - run: pip install leakscan
-      - run: leakscan https://myapp.com --fail-on high
+      - run: pip install overshare
+      - run: overshare https://myapp.com --fail-on high
 ```
 
 Exit codes: `0` clean · `1` findings at or above `--fail-on` · `2` scan error.
@@ -152,7 +153,7 @@ A deliberately vulnerable app is included. Every credential in it is fake.
 
 ```bash
 python testdata/serve_vulnerable_app.py          # terminal 1
-leakscan http://127.0.0.1:8000/ --unsafe-allow-private-ips --no-footprint
+overshare http://127.0.0.1:8000/ --unsafe-allow-private-ips --no-footprint
 ```
 
 Expect score 0, grade F. Use this to see exactly what the scanner catches — and what it misses —
@@ -172,7 +173,7 @@ before you trust it on anything real.
 
 ## Hosted version
 
-Scanning is free and open source, forever. [LeakScan Cloud](#) adds scan history and deltas
+Scanning is free and open source, forever. [Overshare Cloud](#) adds scan history and deltas
 across runs, app-specific remediation, and a verifiable badge for when a customer asks for a
 security review.
 

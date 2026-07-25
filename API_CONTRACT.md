@@ -1,11 +1,11 @@
-# LeakScan API contract (v1)
+# Overshare API contract (v1)
 
-> **Shared source of truth between the frontend (`web/`) and the API layer (`leakscan/`).**
+> **Shared source of truth between the frontend (`web/`) and the API layer (`overshare/`).**
 > The frontend is built against this document and a mock that implements it exactly
 > (`web/lib/mock.ts`). If the API needs to diverge, change this file first — both sides
 > read it.
 
-**Status:** implemented for M3. API in `leakscan/api/`, client in `web/lib/api.ts`.
+**Status:** implemented for M3. API in `overshare/api/`, client in `web/lib/api.ts`.
 
 - **Base path:** `/v1`
 - **Content type:** `application/json` for all requests and responses.
@@ -13,10 +13,10 @@
   point for both audiences.
 - **CORS: not needed, and the API should not add it.** The browser never talks to this API
   directly. It calls the frontend's own origin at `/api/v1/*`, and `web/app/api/v1/[...path]`
-  proxies to `LEAKSCAN_API_URL` at request time. That keeps every call same-origin and lets the
+  proxies to `OVERSHARE_API_URL` at request time. That keeps every call same-origin and lets the
   API stay unpublished on the internal network (see `docker-compose.yml`).
 - **Client IP:** the proxy forwards `X-Forwarded-For` when the platform sets it. The API only
-  trusts that header when `LEAKSCAN_TRUST_PROXY=1`, because it is caller-supplied and rate
+  trusts that header when `OVERSHARE_TRUST_PROXY=1`, because it is caller-supplied and rate
   limiting depends on it.
 
 ---
@@ -148,7 +148,7 @@ through `scanner.py`; until then, do not fake percentages.
 ## 4. `ScanResult`
 
 Present only when `status` is `complete`. This mirrors `ScanResult.to_dict()` in
-`leakscan/findings/model.py` — **keep them in sync**; every field below already exists there
+`overshare/findings/model.py` — **keep them in sync**; every field below already exists there
 except where noted.
 
 ```json
@@ -188,7 +188,7 @@ except where noted.
 
 ## 5. `platform`
 
-Every key is optional. Values come from `leakscan/checks/platform.py`; treat the lists as
+Every key is optional. Values come from `overshare/checks/platform.py`; treat the lists as
 open — the frontend renders unknown values as-is rather than falling over.
 
 | Key | Values today |
@@ -316,7 +316,7 @@ Used by the container healthcheck and the deploy platform. No auth.
 
 Resolved in M3:
 
-- **Cache window** — implemented. `LEAKSCAN_CACHE_SECONDS`, default 300. A repeat scan of the
+- **Cache window** — implemented. `OVERSHARE_CACHE_SECONDS`, default 300. A repeat scan of the
   same URL inside the window returns `200` with the existing result instead of `202`.
 - **Progress** — ships as `null`. See §3.
 

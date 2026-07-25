@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from leakscan.checks.transport import (
+from overshare.checks.transport import (
     PROBE_ORIGIN,
     check_cookies,
     check_cors,

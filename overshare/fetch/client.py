@@ -7,7 +7,7 @@ import httpx
 
 from .ssrf import BlockedTarget, validate_url
 
-USER_AGENT = "LeakScan/0.1 (+https://leakscan.dev/about-our-scanner) passive-security-scan"
+USER_AGENT = "Overshare/0.1 (+https://oversharehq.com/about-our-scanner) passive-security-scan"
 MAX_REDIRECTS = 5
 MAX_BODY_BYTES = 8 * 1024 * 1024
 

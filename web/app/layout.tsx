@@ -3,8 +3,8 @@ import Link from "next/link";
 import { BRAND, GITHUB_URL } from "@/lib/brand";
 import "./globals.css";
 
-// Domain is not settled yet (see marketing/01-naming.md §4 — availability is
-// still unverified), so this stays configurable.
+// Production is https://oversharehq.com. Kept configurable so preview
+// deployments emit their own canonical URLs rather than the production one.
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {

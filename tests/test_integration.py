@@ -5,10 +5,10 @@ import json
 import httpx
 import pytest
 
-from leakscan.checks import transport
-from leakscan.fetch.client import SafeClient
-from leakscan.findings.model import Severity
-from leakscan.scanner import scan
+from overshare.checks import transport
+from overshare.fetch.client import SafeClient
+from overshare.findings.model import Severity
+from overshare.scanner import scan
 
 from . import fixtures as fx
 

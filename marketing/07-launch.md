@@ -14,7 +14,7 @@ broken link, is the most expensive mistake available here.
 **Blocking — no launch without every one of these:**
 
 - [ ] Name resolved and verified (`01-naming.md` §4 — including trademark)
-- [ ] `pip install leakscan` works from a clean machine. Test on a machine that isn't yours
+- [ ] `pip install overshare` works from a clean machine. Test on a machine that isn't yours
 - [ ] README rewritten (`03-readme.md`)
 - [ ] **`METHODOLOGY.md` exists and is real.** README and landing page both link to it. It is the
       single link a skeptical reader clicks. It cannot 404
@@ -44,7 +44,7 @@ broken link, is the most expensive mistake available here.
 
 Post Tue–Thu, roughly 8–10am US Eastern. Title format is strict:
 
-> **Show HN: LeakScan – Open-source scanner for what your web app leaks publicly**
+> **Show HN: Overshare – Open-source scanner for what your web app shows the public**
 
 No superlatives, no "revolutionary," no emoji. HN titles that sell get flagged.
 

@@ -11,7 +11,7 @@ been renamed or merged.
 ## 1. The faceless-brand problem, solved
 
 You chose a faceless product brand. Reddit is the hardest channel for that, because Reddit
-detects and punishes brand accounts hard. Posting as `LeakScanOfficial` gets you downvoted,
+detects and punishes brand accounts hard. Posting as `OvershareOfficial` gets you downvoted,
 reported, and shadowbanned.
 
 **The resolution: be a person, not a persona, and let the project be a project.**

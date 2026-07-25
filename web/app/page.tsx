@@ -104,8 +104,11 @@ export default function HomePage() {
     <div className="mx-auto max-w-5xl px-6">
       {/* Hero */}
       <section className="py-16 sm:py-20">
+        {/* Tagline fixed in marketing/01-naming.md §1. The "on every deploy"
+            half is load-bearing: it carries the continuous/CI position that the
+            04-landing-page.md H1 left to the subheading. */}
         <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Know what your app shows the public.
+          Find out what your app shows the public — on every deploy.
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-slate-600">
           Open-source security scanner for AI-built web apps. Paste a URL, or run

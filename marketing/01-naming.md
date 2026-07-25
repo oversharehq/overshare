@@ -1,114 +1,150 @@
 # Naming
 
-**Decision needed before:** anything is published. Domains, package names, GitHub org, badge URLs,
-and backlinks all break on a rename. Right now the cost of changing is one find-replace. After the
-study lands it is weeks of work and lost SEO.
+## 1. Decision
 
-**Nothing below has been verified for availability.** Run §4 before committing.
+**Resolved 2026-07-25.**
+
+| | |
+|---|---|
+| Product | **Overshare** |
+| Command / package | `overshare` |
+| Primary domain | **oversharehq.com** |
+| Tagline carries the category | "Find out what your app shows the public — on every deploy." |
+
+```bash
+pip install overshare
+overshare https://myapp.com --fail-on high
+```
+
+**Still outstanding, and it is the real gate:** the trademark search. IP Australia and USPTO TESS,
+classes 9 and 42. Check `Oversecured` hardest — an existing mobile app vulnerability scanner,
+different word but same category and similar prefix. Nothing should be published until this clears.
 
 ---
 
-## 1. The case against "LeakScan"
+## 2. Why the previous name was dropped
 
-Not a bad name. Three specific problems, in order of severity:
+Not preference — a verified collision. The rejected name was **Leak**+**Scan** (written split here
+so a find-replace can't rewrite this section again; see the warning at the end of this file).
 
-1. **It is camouflage in this market.** The space is already SupaScan, Scanbee, vibeappscanner,
-   VibeCheck, CheckVibe, VibeShip, VibeEval, SecureVibing, checkmyvibeapp. Another `*scan` name is
-   indistinguishable in a list — and lists are literally how buyers encounter this category now
-   ("best vibe coding security scanners 2026" roundups).
-2. **Fear register, which your own brief flags as wrong.** Brief §2 concludes: sell the outcome,
-   not the fear, because users don't believe they're vulnerable. "Leak" is the fear word. It
-   fights the trust-artifact positioning and the badge.
-3. **It describes a one-shot event.** Our entire differentiation is that this runs continuously in
-   CI. "Scan" is a noun-moment; the position is a habit.
+**That domain on `.io` is a live product of exactly that name.** A data-breach search engine ("find
+if your password has been compromised"), domain registered 2024-08-10, serving HTTP 200 behind
+Cloudflare. Confirmed by fetching the page, not inferred. The `.com` has been registered since 2015.
 
-Also unverified for .com/.dev, PyPI, npm, and trademark (brief §12 open question, still open).
+Three consequences, any one of which is disqualifying:
 
-## 2. Criteria
+1. **Trademark.** The test is likelihood of confusion, not string equality. An identically-named
+   product in the same category, in the classes you'd file in, is the scenario that forces a
+   rename after launch — exactly what §5 warns about.
+2. **You would never rank for your own name.** Every search for it returns them, forever.
+3. **Wrong register anyway.** Brief §2 concludes: sell the outcome, not the fear. "Leak" is the
+   fear word, and it fights the trust-artifact positioning and the badge.
+
+The pluralised `.com` and the `.com.au` were considered and rejected. Neither removes the collision —
+pluralising an existing mark in the same class arguably worsens it, plural domains leak type-in
+traffic to the singular, and `.com.au` requires an ABN while signalling "Australian small business"
+for a product distributed globally via GitHub and PyPI.
+
+---
+
+## 3. Criteria used
 
 - Short, typeable, unambiguous as a shell command
-- **No "vibe"** — saturated, and "vibe coding" will date badly; this tool should outlive the term
-- **No "scan" suffix** — see above
-- Available as GitHub org + PyPI + npm + domain
-- Trust/proof register, not fear register
-- Doesn't over-narrow (not Supabase-only, not Lovable-only — brief §3 wants cross-platform)
+- **No same-category collision** — the test that killed the previous name, and the one that matters.
+  Domain availability is secondary; every real English word has its `.com` taken by someone
+- **No "vibe"** — saturated, and the term will date badly; this tool should outlive it
+- **No "scan" suffix** — the market is already SupaScan, Scanbee, vibeappscanner, VibeCheck,
+  CheckVibe, VibeShip, VibeEval, SecureVibing. Another `*scan` is camouflage, and roundup lists are
+  how buyers meet this category
+- Proof register, not fear register
+- Doesn't over-narrow — brief §3 wants cross-platform, so nothing Supabase- or bundle-specific
 
-## 3. Shortlist
+---
 
-### Recommended: **plainsight**
+## 4. Why Overshare
 
-```bash
-plainsight https://myapp.com
-plainsight --fail-on high        # in CI
-```
+- **Describes the actual finding.** A missing CSP or a published source map isn't a *leak*, but it
+  is oversharing. The word covers the whole severity range; "leak" only fits the catastrophic end.
+- **Right register.** Wry rather than alarming, which matches the tone the README already sets
+  ("a scanner that cries wolf gets ignored") and the brief's sell-the-outcome conclusion.
+- **Ages independently** of the AI-codegen wave. Not `*scan`, not `vibe*`.
+- **No collision.** No existing security or developer-tool product uses the name.
+- **Memorable.** It raises a half-smile, which is why people retain it after one exposure.
 
-- **Describes the product precisely.** Tier A fetches only what the app already serves to any
-  visitor. The exposure was always in plain sight; we just look. That is the whole product.
-- **Carries the legal posture for free.** "We only look at what's in plain sight" is the
-  one-sentence version of brief §4's authorisation model. Useful for the ethics doc, and it
-  preempts "is this legal?" — which will be the top comment on every HN and Reddit post.
-- Not fear-framed, not vibe-framed, no scan suffix, ages independently of the AI-codegen wave.
-- One word, reads as a real product, works as a GitHub org.
+**The known objection:** heard cold, it doesn't tell you it's a security scanner. That's true, and
+it's normal — Snyk, Sentry, Docker, Terraform, Vercel, Semgrep and Trivy are all meaningless
+without context. The name's job is to be memorable and ownable; the tagline explains. Nobody meets
+this name in isolation — they meet it on a README or a landing page with the explanatory line
+directly beneath.
 
-Risk: two syllables of abstraction — doesn't say "security" on its own. Acceptable for a dev tool
-where the tagline does that work; would be weaker for a pure consumer SaaS.
+The alternative was a descriptive name like `surfacecheck` (`.io` and PyPI free). Rejected because
+descriptive marks are weak to trademark, compete against the generic phrase in search, and narrow
+the product — `surfacecheck` and `bundlecheck` both box in a scanner that already does DNS, TLS,
+headers and CT logs, with RLS next.
 
-### Alternates
+---
 
-| Name | Angle | Watch out for |
-|---|---|---|
-| **frontage** | What's visible from the street. Same logic, more architectural. | Real-estate connotation. |
-| **bystander** | What any passer-by could see — the exact legal standard for Tier A. | Slightly passive/negative ("bystander effect"). |
-| **glasshouse** | "Your app is a glass house." Vivid, memorable. | Faintly accusatory; longer. |
-| **curbside** | Curb appeal — what anyone sees without entering. | Reads retail/food-pickup. |
+## 5. Availability
 
-### Rejected
+Checked 2026-07-25 via RDAP and the PyPI JSON API, both calibrated against known-good and
+known-bad controls first. **RDAP "free" is a strong signal, not proof — confirm at the registrar
+before paying.**
 
-`shipcheck`, `shipsafe`, `safeship` — **SafeToShip and ShipSecure both already exist** in this
-exact market. Direct collision.
-`greenlight` — multiple existing security/compliance companies (Lightship's Greenlight, Greenlight
-Guru). Contested.
-`attest` — generic, crowded in compliance tooling, weak as a command.
+| Asset | Status |
+|---|---|
+| PyPI `overshare` | **free** — the one that matters most for `pip install` |
+| npm `overshare` | free |
+| `oversharehq.com` | **free — buy this** |
+| `tryovershare.com`, `overshareapp.com` | free (alternates) |
+| `overshare.io` / `.sh` / `.tools` / `.security` | free |
+| `overshare.com` / `.dev` / `.app` | taken |
+| GitHub org `overshare` | taken → use `oversharehq` |
 
-## 4. Availability checklist
+**Do not buy** the registrar's upsell TLDs. `.tech` renews at ~$140/yr, `.world` ~$91, `.build`
+~$71, against ~$15–20 for `.com`. The cheap first year is the hook. Also avoid hyphens
+(`over-share.com`) — every spoken mention becomes "overshare, with a dash".
 
-Run all of these before committing. Fifteen minutes.
+**On `.io`:** fine as a redirect, not as the primary. Its long-term future carries some uncertainty
+as a ccTLD tied to the Chagos Islands sovereignty transfer. Low risk, but if it were ever retired
+you want to lose a redirect, not your brand.
 
-- [ ] Domain: `.com` and `.dev` — check on a registrar directly, not a suggestion tool
-- [ ] GitHub organisation name free
-- [ ] PyPI project name free (`pip index versions <name>` / pypi.org/project/<name>)
-- [ ] npm package name free — needed if a Node wrapper or Action ever ships
-- [ ] Trademark: search your own jurisdiction (IP Australia) **and** USPTO TESS, class 9 and 42
-- [ ] Existing product collision: plain web search + a search restricted to GitHub
-- [ ] Social handles: X, Reddit — grab even if unused
-- [ ] Not an offensive/awkward word in another major language
+## 6. Remaining checklist
 
-**Trademark is the one that can force a rename after launch.** Do not skip it. A security brand
-that has to rebrand mid-flight loses the trust it spent months accumulating.
+- [ ] **Trademark — IP Australia + USPTO TESS, classes 9 and 42.** The only check that can force a
+      rename after launch
+- [ ] Confirm `oversharehq.com` at a registrar and buy it
+- [ ] Register PyPI `overshare` — free, and more painful to lose than a domain
+- [ ] Register npm `overshare`
+- [ ] Create GitHub org `oversharehq`
+- [ ] Grab X and Reddit handles even if unused
+- [ ] Check the word isn't awkward in another major language
 
-## 5. If you keep LeakScan anyway
+## 7. Code rename — done 2026-07-25
 
-Defensible if you'd rather not spend the cycles. In that case:
+The codebase now carries the new name throughout. Completed:
 
-- Lean the *tagline* hard toward proof, to offset the fear register: e.g. "Know what your app
-  shows the public — on every deploy," not "Find your leaks."
-- Still verify §4 before publishing. The name being unverified is a live risk today.
-- Expect to spend more copy explaining continuous/CI, since the name works against it.
+- Python package directory and every import, via `git mv` so history follows the rename
+- `[project.scripts]`, project name and license in `pyproject.toml`
+- `web/lib/brand.ts`, and the `OVERSHARE_*` environment variables across `Dockerfile`,
+  `web/Dockerfile`, `docker-compose.yml` and `web/.env.example`
+- `README.md`, `API_CONTRACT.md`, the build brief (now `overshare-build-brief.md`), and the
+  scanner's outbound `User-Agent`, which pointed at the old domain
 
-## 6. Decision
+Two things this does **not** cover:
 
-**Resolved 2026-07-25: the name stays `LeakScan`, command `leakscan`.** The case in §1 was heard
-and overruled. All `{{NAME}}`/`{{CMD}}` placeholders across `marketing/` have been replaced.
+- The checkout directory is still named after the old product. Renaming it breaks running
+  sessions, so it is left for whenever the repo is next cloned fresh.
+- A stale `*.egg-info/` may linger from an earlier editable install. Harmless; cleared by a
+  reinstall.
 
-§5 is therefore live, not hypothetical — the copy now has to do the work the name does not:
+---
 
-- The landing H1 is "Know what your app shows the public," not a leak-framed line, to keep the
-  page in the proof register.
-- Continuous/CI gets its own section rather than being implied, because "scan" reads one-shot.
+## 8. Warning: do not blindly find-replace this directory again
 
-In the codebase the name is centralised so a reversal stays cheap: `web/lib/brand.ts` on the
-frontend, `[project.scripts]` in `pyproject.toml` for the command.
+A global `s/oldname/overshare/g` across `marketing/` was run once and **corrupted this file**,
+rewriting the section that explains why the old name was rejected into a claim that the *new* name
+collides — the exact opposite of the truth. Sections 2, 3 and 7 above are now written without the
+literal old string so the same script can't damage them twice.
 
-**Still outstanding — §4 was not run.** Domain, PyPI, npm, GitHub org and trademark are all
-unverified. Trademark is the one that can force a rename after launch; it needs a search of
-IP Australia and USPTO TESS, classes 9 and 42, before anything is published.
+If the rename gets re-run, check that §2 still describes the *rejected* name and not Overshare.
+Historical references and code paths are the two things a blanket replace always breaks.

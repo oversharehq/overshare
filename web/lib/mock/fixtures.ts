@@ -56,7 +56,7 @@ const VULNERABLE_FINDINGS: ScanResult["findings"] = [
     title: "CORS reflects any origin while allowing credentials",
     detail:
       "The server echoed the request's Origin header back in Access-Control-Allow-Origin and also sent Access-Control-Allow-Credentials: true. Any site a logged-in user visits can make authenticated requests to this app and read the responses.",
-    evidence: "Access-Control-Allow-Origin: https://leakscan-probe.invalid",
+    evidence: "Access-Control-Allow-Origin: https://overshare-probe.invalid",
     location: "https://taskflow.lovable.app/",
     remediation:
       "Replace origin reflection with an explicit allowlist of origins you control, and only send Access-Control-Allow-Credentials for those. If no cross-origin browser client needs credentials, drop the header entirely.",

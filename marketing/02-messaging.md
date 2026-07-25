@@ -1,7 +1,7 @@
 # Messaging
 
 Source of truth for all copy. Landing page, README, Reddit posts, and launch assets all derive
-from this file. `LeakScan` / `leakscan` are placeholders — see `01-naming.md`.
+from this file. Name resolved 2026-07-25 — see `01-naming.md`.
 
 ---
 
@@ -45,7 +45,7 @@ Anyone wanting a 150-check box-tick. Chasing these dilutes the product and the c
 > Find out what your app is showing the public — then prove you fixed it.
 
 **Positioning statement (internal, not copy):**
-> For developers shipping AI-generated web apps, LeakScan is an open-source scanner that reports
+> For developers shipping AI-generated web apps, Overshare is an open-source scanner that reports
 > exactly what the app exposes to any visitor. Unlike the closed URL scanners in this category, it
 > runs in CI on every deploy and every detection is auditable — because the code is public and the
 > false-positive rate is published.
@@ -147,7 +147,7 @@ wolf gets ignored"* — is exactly right. More of that.
 > Runs in CI. High-confidence detection only.
 
 **50 words:**
-> LeakScan is an open-source scanner for AI-generated web apps. It fetches only what your app
+> Overshare is an open-source scanner for AI-generated web apps. It fetches only what your app
 > already serves to any visitor — shipped JS, headers, TLS, DNS — and reports exposed secrets and
 > misconfiguration. It runs in CI and fails your build on real findings. Detection is
 > high-confidence only; the false-positive rate is published.

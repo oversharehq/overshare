@@ -53,7 +53,7 @@ class ScanWorker:
         self._include_ct = include_ct
         self._allow_private = allow_private
         self._pool = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix="leakscan-worker"
+            max_workers=max_workers, thread_name_prefix="overshare-worker"
         )
 
     def submit(self, scan_id: str, url: str) -> None:

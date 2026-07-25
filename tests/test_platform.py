@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from leakscan.checks.platform import (
+from overshare.checks.platform import (
     detect_backend,
     detect_builder,
     detect_framework,
@@ -51,6 +51,17 @@ def test_replit_builder():
 
 def test_unknown_builder_returns_none():
     assert detect_builder("plain js", "https://example.com/", {}) is None
+
+
+def test_marketing_mention_of_a_builder_is_not_a_fingerprint():
+    """vercel.com talks about v0 constantly; that does not mean it was built with v0."""
+    content = "Try v0.dev today! Build with lovable.app and bolt.new. v0-preview-2"
+    assert detect_builder(content, "https://vercel.com/", {}) is None
+
+
+def test_builder_domain_must_match_host_not_substring():
+    assert detect_builder("", "https://not-lovable.app.evil.test/", {}) is None
+    assert detect_builder("", "https://my-app.lovable.app/", {}) == "lovable"
 
 
 def test_framework_detection():

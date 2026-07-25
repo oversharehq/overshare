@@ -1,5 +1,5 @@
 [project]
-name = "leakscan"
+name = "overshare"
 version = "0.1.0"
 description = "Passive security scanner for AI-generated web apps (Tier A)"
 requires-python = ">=3.11"
@@ -12,18 +12,18 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 # The CLI is the primary distribution channel and stays dependency-light; the
-# hosted API is opt-in. Install with: pip install leakscan[api]
+# hosted API is opt-in. Install with: pip install overshare[api]
 api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
 
 [project.scripts]
-leakscan = "leakscan.cli:main"
+overshare = "overshare.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["leakscan*"]
+include = ["overshare*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

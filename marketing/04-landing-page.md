@@ -1,7 +1,9 @@
 # Landing page copy
 
 **For the frontend agent.** `web/app/page.tsx` is currently the unmodified Next.js template — this
-is the copy to build against. Replace `LeakScan` / `leakscan` (see `01-naming.md`).
+is the copy to build against. Product is **Overshare**, command `overshare`, site
+`oversharehq.com` (see `01-naming.md`). Note the codebase still carries the old name — rename
+tracked in `01-naming.md` §7.
 
 **Structural principle:** this page serves two audiences (`02-messaging.md` §1) who want opposite
 things. The developer wants to `pip install`; the founder wants to paste a URL. **Give them
@@ -31,8 +33,8 @@ No signup. Results in about 30 seconds.
 
 **Secondary CTA** — directly beneath, equal visual weight
 ```
-$ pip install leakscan
-$ leakscan https://myapp.com --fail-on high
+$ pip install overshare
+$ overshare https://myapp.com --fail-on high
 ```
 with a copy button and a `View on GitHub →` link.
 
@@ -101,8 +103,8 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - run: pip install leakscan
-      - run: leakscan https://myapp.com --fail-on high
+      - run: pip install overshare
+      - run: overshare https://myapp.com --fail-on high
 ```
 
 > Exit code 1 on findings at or above your threshold. JSON output for anything else you want to
@@ -172,7 +174,7 @@ readers, and it is how a faceless brand earns trust.
 > When a customer asks for a security review
 
 **Body**
-> Finding problems is the free part. LeakScan Cloud is for what comes next: history that shows
+> Finding problems is the free part. Overshare Cloud is for what comes next: history that shows
 > what regressed between deploys, fixes written against your actual schema rather than generic
 > advice, and a verifiable badge you can put in front of a customer who's asking whether you're
 > safe to buy from.

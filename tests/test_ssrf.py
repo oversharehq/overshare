@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from leakscan.fetch import ssrf
-from leakscan.fetch.ssrf import BlockedTarget, check_ip, validate_url
+from overshare.fetch import ssrf
+from overshare.fetch.ssrf import BlockedTarget, check_ip, validate_url
 
 BLOCKED_IPS = [
     ("127.0.0.1", "loopback"),
