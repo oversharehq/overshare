@@ -292,11 +292,17 @@ Do not put calibration off. A scanner that produces false negatives is actively 
 
 **Free forever (open source):** the detection engine, CLI, and GitHub Action. All Tier A + Tier B checks, all findings, generic remediation text. Locking generic advice makes the free tier feel punitive and defends nothing.
 
-**Paid (hosted cloud, $19–39/mo):** scan history and deltas across runs, app-specific *generated and validated* fixes (the `fix` field in the API contract), re-scan verification, badge issuance and revocation, team/multi-app dashboards.
+**Paid tier 1 — "Prove it" (hosted cloud, ~$19–29/mo):** scan history and deltas across runs, scheduled monitoring and regression alerts, badge issuance and revocation, shareable report, team/multi-app dashboards. This is the entry rung because it is cheap to build (storage + cron + a public page), high margin, recurring, and it is what sells at the questionnaire moment.
 
-**One-off deep scan ($99–199):** authenticated Tier C + report suitable for a buyer or enterprise customer. Anchor against the €500–2,000 manual technical-diligence alternative.
+**Paid tier 2 — Remediation (~$49–99/mo):** app-specific *generated and validated* fixes (the `fix` field in the API contract), delivered as a PR. Prices higher because it is the moat and because the LLM cost lives here.
 
-The line: **detection is free, fixing and proving are paid.** Note the field is already at $9 one-off / $19–59/mo (§3), so there is no room to price above it on features competitors already give away.
+**One-off deep scan ($199–499):** authenticated Tier C + report suitable for a buyer or enterprise customer. Anchor against the €500–2,000 manual technical-diligence alternative. **A one-off, not a subscription rung** — it is bought when a specific deal demands it, then not needed for months, and it is both the most expensive thing to build and the heaviest legally.
+
+The line: **detection is free, fixing and proving are paid.** Three rules that follow, and should not be re-litigated:
+
+- **Tier B stays free.** RLS enforcement is the highest-value check in the product, and competitors already probe Supabase RLS in *their* free tiers. Paywalling ours makes our free scan worse than theirs and kills the wedge.
+- **Remediation is not the top of a depth ladder** — it is the upsell from *any* finding, at the moment the user sees something red. Do not make anyone upgrade twice to scan deeper and then to fix.
+- The field is already at $9 one-off / $19–59/mo (§3), so there is no room to price above it on features competitors give away. The two monthly tiers are also what make the retention metric (repeat scans per app after 30 days) achievable at all.
 
 ---
 

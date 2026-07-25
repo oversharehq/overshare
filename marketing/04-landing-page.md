@@ -174,12 +174,21 @@ readers, and it is how a faceless brand earns trust.
 > When a customer asks for a security review
 
 **Body**
-> Finding problems is the free part. Overshare Cloud is for what comes next: history that shows
-> what regressed between deploys, fixes written against your actual schema rather than generic
-> advice, and a verifiable badge you can put in front of a customer who's asking whether you're
-> safe to buy from.
+> Finding problems is the free part — and it stays free, including the Row Level Security check.
+>
+> Overshare Cloud is for what comes next: history that shows what regressed between deploys,
+> scheduled re-scans so you hear about it before your customer does, and a verifiable badge you can
+> put in front of someone asking whether you're safe to buy from.
+>
+> When you'd rather not write the fix yourself, a higher tier generates it against your actual
+> schema and opens it as a pull request.
 
 **CTA (pre-launch):** `Get notified →` (email capture only — do not fake a checkout)
+
+**Packaging note for whoever builds the pricing page later** (`00-strategy.md` §3): two monthly
+tiers — "Prove it" (~$19–29) for history, monitoring and the badge; remediation (~$49–99) for
+generated fixes. Authenticated Tier C deep scans are a **one-off** ($199–499), never a
+subscription rung. Do not paywall Tier B; the free scan has to beat the incumbents' free scan.
 
 ---
 

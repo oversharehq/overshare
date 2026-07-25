@@ -173,9 +173,13 @@ before you trust it on anything real.
 
 ## Hosted version
 
-Scanning is free and open source, forever. [Overshare Cloud](#) adds scan history and deltas
-across runs, app-specific remediation, and a verifiable badge for when a customer asks for a
-security review.
+Scanning is free and open source, forever — including the Row Level Security check. That isn't a
+trial.
+
+[Overshare Cloud](#) is for what the scanner can't do on its own: scan history showing what
+regressed between deploys, scheduled monitoring, and a verifiable badge for when a customer asks
+for a security review. A higher tier writes the fix against your actual schema and opens it as a
+PR.
 
 ## Contributing
 

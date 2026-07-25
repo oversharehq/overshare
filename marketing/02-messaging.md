@@ -71,8 +71,13 @@ Order matters. Lead with 1.
 5. **It refuses to do the illegal thing.** SSRF-hardened, no writes, no enumeration, no scanning
    apps you don't own.
 
-Paid tier adds: history and deltas across runs · validated, app-specific fixes · a badge you can
-hand a customer.
+**Paid adds, in two rungs** (`00-strategy.md` §3):
+
+- **Prove it** (~$19–29/mo) — history and deltas across runs, scheduled monitoring, regression
+  alerts, and a verifiable badge you can hand a customer.
+- **Remediation** (~$49–99/mo) — validated, app-specific fixes, delivered as a PR.
+
+Tier C authenticated deep scans sell as a one-off ($199–499), not a subscription rung.
 
 ---
 

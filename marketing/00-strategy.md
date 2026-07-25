@@ -23,7 +23,7 @@ SupaExplorer · SecureVibing · VibeShip · ChakraView · amihackable.dev · che
 | The Tier A check list | SafeToShip ships headers, TLS, exposed files, JS secrets, RLS, Firebase rules, CORS, cookie flags, SPF/DKIM/DMARC, stack detection. That is our §5 scope, feature for feature. |
 | Verifiable trust badge | vibeappscanner already issues one on a clean scan. |
 | Remediation guidance | vibeappscanner ships per-finding risk, evidence, step-by-step fixes with code, plus markdown export to paste into Claude/ChatGPT. |
-| $19–39/mo pricing | SafeToShip $9 one-off / $24/mo · CheckVibe free + $24–59/mo · VibeEval $19/mo or $199 lifetime. |
+| The brief's original single $19–39/mo tier | SafeToShip $9 one-off / $24/mo · CheckVibe free + $24–59/mo · VibeEval $19/mo or $199 lifetime. Superseded — see the packaging table in §3. |
 
 **Sourcing caveat:** most of the above comes from vendor self-description and "best scanner"
 roundups that competing vendors themselves author. Treat as directionally reliable, not verified.
@@ -91,6 +91,32 @@ badge issuance and verification · multi-app and team views · scheduled monitor
 
 This is brief §3 differentiator #1 taken to its conclusion — detection is commoditising and free,
 so stop pretending it is an asset and convert it into distribution instead.
+
+### Packaging
+
+Ordered by what recurs and what is cheap to build — **not** by scan depth.
+
+| Tier | Contents | Why it sits here |
+|---|---|---|
+| **Free** (OSS + hosted) | Tier A **and Tier B**, all findings, generic remediation, CLI, GitHub Action | Must be at least as good as SafeToShip's free tier or the funnel dies |
+| **~$19–29/mo — "Prove it"** | Scan history and cross-run deltas, scheduled monitoring, regression alerts, **verifiable badge**, shareable report | Cheap to build (storage + cron + a public page), high margin, recurring, and it sells at the questionnaire moment |
+| **~$49–99/mo — Remediation** | Validated app-specific fixes, PR generation | The moat, and where LLM cost lives — so it prices higher |
+| **$199–499 one-off** | Tier C authenticated deep scan + report | Anchor against the €500–2,000 manual technical-diligence alternative |
+
+Three decisions worth not re-litigating later:
+
+- **Tier B must be free.** The RLS enforcement check is the highest-value check in the product, and
+  SafeToShip already probes Supabase RLS in *its* free tier. Paywalling ours makes our free scan
+  worse than the incumbent's, which kills the wedge.
+- **Tier C is a one-off, not a subscription rung.** People buy it when a specific deal demands it,
+  then don't need it again for months. It is also the most expensive thing to build and the
+  heaviest legally — a bad choice for an entry paid tier.
+- **Remediation is not the top of a depth ladder.** It is the upsell from *any* finding, at the
+  moment someone sees something red. Making a user upgrade twice — once to scan deeper, once to
+  fix — adds friction exactly where intent peaks.
+
+The two monthly tiers are what make the §8 retention metric real. A ladder of one-time depth
+purchases leaves no recurring value and no reason for an app to come back.
 
 ---
 
