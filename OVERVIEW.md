@@ -271,7 +271,9 @@ reachable from the internet.
 
 ```bash
 pytest            # 211 tests
-cd web && npx tsc --noEmit && npx eslint . && npm run build
+# Build first: PageProps and RouteContext are generated into web/.next/types,
+# so type checking a clean checkout before building fails on missing globals.
+cd web && npm run build && npx tsc --noEmit && npx eslint .
 ```
 
 ---

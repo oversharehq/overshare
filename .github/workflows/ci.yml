@@ -39,9 +39,12 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      # Build first. PageProps and RouteContext are globals Next generates into
+      # .next/types, which tsconfig includes — on a fresh clone there is no
+      # .next, so type checking first fails on types that do not exist yet.
+      - run: npm run build
       - run: npx tsc --noEmit
       - run: npx eslint .
-      - run: npm run build
 
   action:
     # Proves the composite action still resolves and installs. It scans the
