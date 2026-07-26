@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Code, Note, Prose, Section, Shell } from "@/components/Paper";
-import { Todo } from "@/components/Todo";
 import { BRAND, GITHUB_URL } from "@/lib/brand";
 import {
   GRADE_THRESHOLDS,
@@ -374,9 +373,6 @@ export default function MethodologyPage() {
         >
           Open an issue ↗
         </a>
-        <div className="mt-3">
-          <Todo>Repo is not published, so this link 404s.</Todo>
-        </div>
       </Section>
 
       <Section index="08" id="reproducing" title={S[7]}>

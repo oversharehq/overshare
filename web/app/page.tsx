@@ -3,6 +3,7 @@ import { CommandBlock } from "@/components/CommandBlock";
 import { Code, Figure, Note, Prose, Section, Shell } from "@/components/Paper";
 import { ScanForm } from "@/components/ScanForm";
 import { Todo } from "@/components/Todo";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import { BRAND, GITHUB_URL } from "@/lib/brand";
 import { PLATFORMS } from "@/lib/platforms";
 
@@ -280,13 +281,6 @@ jobs:
         >
           Read the methodology →
         </Link>
-        <div className="mt-4 max-w-[36rem]">
-          <Todo>
-            The rate itself is not measured yet — that is M4 calibration. No
-            number can appear here or on the methodology page until it is, and
-            the sentence above must not become a claim before then.
-          </Todo>
-        </div>
       </Section>
 
       <Section index="04" id="limits" title="What this scanner cannot tell you">
@@ -367,11 +361,8 @@ jobs:
             whether you are safe to buy from.
           </p>
         </Prose>
-        <div className="mt-5 max-w-[36rem]">
-          <Todo>
-            Needs an email capture that actually stores the address. Not built —
-            per the spec, do not fake a checkout or a signup.
-          </Todo>
+        <div className="mt-6">
+          <WaitlistForm />
         </div>
       </Section>
 

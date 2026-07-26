@@ -296,3 +296,80 @@ def test_sweeper_runs_only_when_retention_is_positive(
 )
 def test_fix_is_only_offered_where_it_adds_something(check_id, expected):
     assert fix_available(check_id) is expected
+
+
+# --- waitlist ---------------------------------------------------------------
+
+
+def test_waitlist_accepts_and_stores_an_address(client, store):
+    response = client.post("/v1/waitlist", json={"email": "someone@example.com"})
+
+    assert response.status_code == 202
+    assert response.json() == {"status": "ok"}
+    assert store.count_waitlist_since("testclient", 3600) == 1
+
+
+def test_waitlist_normalises_case_and_whitespace(client, store):
+    client.post("/v1/waitlist", json={"email": "  Someone@Example.COM  "})
+
+    row = store._conn.execute("SELECT email FROM waitlist").fetchone()
+    assert row["email"] == "someone@example.com"
+
+
+def test_waitlist_signup_is_idempotent(client, store):
+    first = client.post("/v1/waitlist", json={"email": "dupe@example.com"})
+    second = client.post("/v1/waitlist", json={"email": "DUPE@example.com"})
+
+    # Identical responses: whether an address is already stored must not be
+    # observable from an unauthenticated endpoint.
+    assert (first.status_code, first.json()) == (second.status_code, second.json())
+    count = store._conn.execute("SELECT COUNT(*) AS n FROM waitlist").fetchone()["n"]
+    assert count == 1
+
+
+@pytest.mark.parametrize(
+    "email",
+    [
+        "",
+        "   ",
+        "not-an-email",
+        "no@domain",
+        "@example.com",
+        "spaces in@example.com",
+        "two@@example.com",
+        None,
+        12345,
+        "a" * 250 + "@example.com",
+    ],
+)
+def test_waitlist_rejects_malformed_addresses(client, store, email):
+    response = client.post("/v1/waitlist", json={"email": email})
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "invalid_email"
+    count = store._conn.execute("SELECT COUNT(*) AS n FROM waitlist").fetchone()["n"]
+    assert count == 0
+
+
+def test_waitlist_rate_limits_per_ip(store, worker):
+    settings = Settings(db_path=":memory:", waitlist_limit_per_hour=2)
+    app = create_app(settings, store=store, worker=worker)
+    with TestClient(app) as client:
+        assert client.post("/v1/waitlist", json={"email": "a@example.com"}).status_code == 202
+        assert client.post("/v1/waitlist", json={"email": "b@example.com"}).status_code == 202
+
+        blocked = client.post("/v1/waitlist", json={"email": "c@example.com"})
+        assert blocked.status_code == 429
+        assert blocked.json()["error"]["code"] == "rate_limited"
+        assert blocked.headers["Retry-After"] == "3600"
+
+
+def test_waitlist_survives_the_retention_sweep(store):
+    """A scan expires after 30 days. Consent to be contacted does not."""
+    store.add_waitlist("keep@example.com", client_ip="1.2.3.4")
+    store.create("https://example.com")
+
+    store.purge_expired(0)
+
+    count = store._conn.execute("SELECT COUNT(*) AS n FROM waitlist").fetchone()["n"]
+    assert count == 1

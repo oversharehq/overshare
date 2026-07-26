@@ -39,6 +39,7 @@ class Settings:
     rate_limit_per_hour: int = _env_int("OVERSHARE_RATE_LIMIT_PER_HOUR", 5)
     max_concurrent_per_ip: int = _env_int("OVERSHARE_MAX_CONCURRENT_PER_IP", 1)
     cache_seconds: int = _env_int("OVERSHARE_CACHE_SECONDS", 300)
+    waitlist_limit_per_hour: int = _env_int("OVERSHARE_WAITLIST_LIMIT_PER_HOUR", 3)
     # Zero or less disables purging entirely, for self-hosters scanning their own
     # apps who want unbounded history. It deliberately does not mean "expire
     # immediately" — that reading turns a plausible misconfiguration into data loss.
@@ -81,6 +82,23 @@ def _is_hostname_shaped(host: str) -> bool:
     if ":" in host:
         return True
     return bool(_HOSTNAME_RE.match(host))
+
+
+# Intentionally permissive about the local part and strict about shape. The only
+# real validation of an address is delivery, and over-tight patterns reject
+# legitimate addresses — which on a signup form is an invisible lost signup.
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
+# RFC 5321 §4.5.3.1.3.
+_EMAIL_MAX_LENGTH = 254
+
+
+def _normalise_email(raw: object) -> str | None:
+    if not isinstance(raw, str):
+        return None
+    candidate = raw.strip().lower()
+    if not candidate or len(candidate) > _EMAIL_MAX_LENGTH:
+        return None
+    return candidate if _EMAIL_RE.match(candidate) else None
 
 
 def _normalise(raw: object) -> str | None:
@@ -217,6 +235,27 @@ def create_app(
         record = store.create(url, client_ip=ip)
         worker.submit(record.id, url)
         return JSONResponse(scan_to_dict(record), status_code=202)
+
+    @app.post("/v1/waitlist")
+    def join_waitlist(request: Request, payload: dict) -> JSONResponse:
+        email = _normalise_email(payload.get("email"))
+        if email is None:
+            return _error("invalid_email", "Enter a valid email address.", 400)
+
+        ip = _client_ip(request, config.trust_proxy)
+        if store.count_waitlist_since(ip, 3600) >= config.waitlist_limit_per_hour:
+            return _error(
+                "rate_limited",
+                "Too many signups from this connection. Try again later.",
+                429,
+                headers={"Retry-After": "3600"},
+            )
+
+        store.add_waitlist(email, client_ip=ip)
+        # Always the same body, whether or not the address was already stored.
+        # Confirming membership would turn this into an oracle for testing
+        # whether a given person uses the product.
+        return JSONResponse({"status": "ok"}, status_code=202)
 
     @app.get("/v1/scans/{scan_id}")
     def get_scan(scan_id: str) -> JSONResponse:

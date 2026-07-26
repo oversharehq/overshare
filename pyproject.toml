@@ -2,12 +2,44 @@
 name = "overshare"
 version = "0.1.0"
 description = "Passive security scanner for AI-generated web apps (Tier A)"
+readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+# Brand rather than a person: the project is deliberately faceless, and in
+# security a name on the package invites social engineering more than it
+# builds trust.
+authors = [{ name = "Overshare" }]
+keywords = [
+    "security",
+    "scanner",
+    "appsec",
+    "secrets-detection",
+    "sast",
+    "supabase",
+    "vibe-coding",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = [
     "httpx>=0.27",
     "dnspython>=2.6",
 ]
+
+[project.urls]
+Homepage = "https://oversharehq.com"
+Methodology = "https://oversharehq.com/methodology"
+Repository = "https://github.com/oversharehq/overshare"
+Issues = "https://github.com/oversharehq/overshare/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -19,7 +51,10 @@ api = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
 overshare = "overshare.cli:main"
 
 [build-system]
-requires = ["setuptools>=68"]
+# >=77 for PEP 639 license expressions (license = "Apache-2.0" plus
+# license-files); the older license = { text = ... } form is deprecated and
+# warns on build.
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

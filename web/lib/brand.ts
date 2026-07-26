@@ -17,8 +17,5 @@ export const BRAND = {
 /**
  * The GitHub *org* is `oversharehq`, not `overshare` — github.com/overshare is
  * already taken. marketing/01-naming.md §5.
- *
- * TODO(pre-launch): the org does not exist yet, so this 404s. Every "View on
- * GitHub" CTA depends on it.
  */
 export const GITHUB_URL = "https://github.com/oversharehq/overshare";

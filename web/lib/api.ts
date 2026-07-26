@@ -74,3 +74,10 @@ export function createScan(url: string): Promise<Scan> {
 export function getScan(id: string): Promise<Scan> {
   return request<Scan>(`/scans/${encodeURIComponent(id)}`);
 }
+
+export function joinWaitlist(email: string): Promise<{ status: string }> {
+  return request<{ status: string }>("/waitlist", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}

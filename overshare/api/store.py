@@ -30,6 +30,17 @@ CREATE TABLE IF NOT EXISTS scans (
 CREATE INDEX IF NOT EXISTS scans_client_created ON scans (client_ip, created_at);
 CREATE INDEX IF NOT EXISTS scans_url_status ON scans (url, status, completed_at);
 CREATE INDEX IF NOT EXISTS scans_created ON scans (created_at);
+
+-- Deliberately outside the retention sweep, which only touches `scans`. A scan
+-- is a vulnerability report with a shelf life; a waitlist signup is consent to
+-- be contacted, and silently deleting it after 30 days would lose the consent
+-- while keeping none of the benefit.
+CREATE TABLE IF NOT EXISTS waitlist (
+    email      TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL,
+    client_ip  TEXT
+);
+CREATE INDEX IF NOT EXISTS waitlist_client_created ON waitlist (client_ip, created_at);
 """
 
 
@@ -212,3 +223,27 @@ class ScanStore:
             )
             self._conn.commit()
             return cursor.rowcount
+
+    def add_waitlist(self, email: str, *, client_ip: str | None = None) -> None:
+        """Record interest in the hosted tier. Idempotent.
+
+        INSERT OR IGNORE rather than a duplicate check, so a second signup from
+        the same address is a no-op and keeps the original timestamp. Callers
+        get no signal either way — whether an address is already on the list is
+        not something an unauthenticated endpoint should confirm.
+        """
+        with self._lock:
+            self._conn.execute(
+                "INSERT OR IGNORE INTO waitlist (email, created_at, client_ip)"
+                " VALUES (?, ?, ?)",
+                (email, utcnow(), client_ip),
+            )
+            self._conn.commit()
+
+    def count_waitlist_since(self, client_ip: str, seconds: int) -> int:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT COUNT(*) AS n FROM waitlist WHERE client_ip = ? AND created_at >= ?",
+                (client_ip, _since(seconds)),
+            ).fetchone()
+            return row["n"]
