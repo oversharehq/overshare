@@ -15,33 +15,38 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-RESEND_ENDPOINT = "https://api.resend.com/emails"
-
-# Resend's shared sending domain rather than @oversharehq.com. Sending from our
-# own domain would require adding Resend to SPF, and that record ends in -all,
-# so getting the order wrong silently drops the mail.
-DEFAULT_SENDER = "Overshare <onboarding@resend.dev>"
+# Mailgun's EU region is api.eu.mailgun.net. Which one is correct depends on
+# where the domain was created, and sending to the wrong one authenticates fine
+# and then 404s on the domain.
+DEFAULT_BASE_URL = "https://api.mailgun.net/v3"
 
 TIMEOUT_SECONDS = 5.0
 
 
 def notify_waitlist_signup(email: str) -> None:
-    api_key = os.environ.get("OVERSHARE_RESEND_API_KEY")
+    api_key = os.environ.get("OVERSHARE_MAILGUN_API_KEY")
+    domain = os.environ.get("OVERSHARE_MAILGUN_DOMAIN")
     recipient = os.environ.get("OVERSHARE_NOTIFY_EMAIL")
     # Unconfigured is the normal case in tests and local development, and it is
     # not a warning — the feature is opt-in.
-    if not api_key or not recipient:
+    if not api_key or not domain or not recipient:
         return
 
-    sender = os.environ.get("OVERSHARE_NOTIFY_SENDER", DEFAULT_SENDER)
+    base_url = os.environ.get("OVERSHARE_MAILGUN_BASE_URL", DEFAULT_BASE_URL)
+    # Defaults to the sending domain, not oversharehq.com. That domain's SPF
+    # ends in -all and does not list Mailgun, so mail from it would be dropped
+    # silently — the hardest failure mode to notice.
+    sender = os.environ.get(
+        "OVERSHARE_NOTIFY_SENDER", f"Overshare <postmaster@{domain}>"
+    )
 
     try:
         response = httpx.post(
-            RESEND_ENDPOINT,
-            headers={"Authorization": f"Bearer {api_key}"},
-            json={
+            f"{base_url}/{domain}/messages",
+            auth=("api", api_key),
+            data={
                 "from": sender,
-                "to": [recipient],
+                "to": recipient,
                 "subject": "Overshare — new waitlist signup",
                 "text": f"{email} joined the Overshare Cloud waitlist.",
             },

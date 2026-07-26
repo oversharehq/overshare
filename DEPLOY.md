@@ -66,16 +66,31 @@ told about them, and `POST /v1/waitlist` behaves identically.
 
 ```bash
 fly secrets set \
-  OVERSHARE_RESEND_API_KEY=re_xxxxxxxx \
+  OVERSHARE_MAILGUN_API_KEY=xxxxxxxx \
+  OVERSHARE_MAILGUN_DOMAIN=sandboxXXXX.mailgun.org \
   OVERSHARE_NOTIFY_EMAIL=you@example.com \
   --app overshare-api
 ```
 
-Mail goes out from Resend's shared `onboarding@resend.dev`, not from
-`oversharehq.com`. That is deliberate: the domain's SPF record ends in `-all`
-and does not list Resend, so sending from it would be dropped silently. To send
-from your own domain you must add Resend's `include:` to SPF *first*, verify the
-domain in Resend, and only then set `OVERSHARE_NOTIFY_SENDER`.
+All three are required. Set only some and nothing is sent — half-configured is
+treated as unconfigured on purpose, because Mailgun answers an unknown domain
+with a 404 that looks nothing like a credentials problem.
+
+Mail goes out from the Mailgun sending domain, not from `oversharehq.com`. That
+is deliberate: the domain's SPF record ends in `-all` and does not list Mailgun,
+so sending from it would be dropped silently. To send from your own domain you
+must add Mailgun's `include:` to SPF *first*, verify the domain in Mailgun, and
+only then set `OVERSHARE_NOTIFY_SENDER`.
+
+**Mailgun sandbox domains only deliver to authorised recipients.** A fresh
+account gets `sandboxXXXX.mailgun.org`, and mail to anything else is accepted by
+the API and then never arrives. Add your own address under Sending → Domains →
+your sandbox → Authorized Recipients, and confirm the verification email, before
+concluding this is broken.
+
+If the Mailgun domain was created in the EU region, set
+`OVERSHARE_MAILGUN_BASE_URL=https://api.eu.mailgun.net/v3` — the US endpoint
+authenticates fine and then 404s on the domain.
 
 The send happens in a background task after the response, and every failure is
 swallowed and logged. A provider outage must never turn a stored signup into an

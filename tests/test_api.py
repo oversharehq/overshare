@@ -381,7 +381,8 @@ def test_waitlist_notification_failure_does_not_fail_the_signup(client, store, m
     A provider outage must not turn a stored signup into an error the visitor
     sees, or they will submit again and assume it is broken.
     """
-    monkeypatch.setenv("OVERSHARE_RESEND_API_KEY", "test-key")
+    monkeypatch.setenv("OVERSHARE_MAILGUN_API_KEY", "test-key")
+    monkeypatch.setenv("OVERSHARE_MAILGUN_DOMAIN", "sandbox.mailgun.org")
     monkeypatch.setenv("OVERSHARE_NOTIFY_EMAIL", "owner@example.com")
 
     def explode(*_args, **_kwargs):
@@ -397,7 +398,8 @@ def test_waitlist_notification_failure_does_not_fail_the_signup(client, store, m
 
 
 def test_waitlist_notification_is_skipped_when_unconfigured(client, monkeypatch):
-    monkeypatch.delenv("OVERSHARE_RESEND_API_KEY", raising=False)
+    monkeypatch.delenv("OVERSHARE_MAILGUN_API_KEY", raising=False)
+    monkeypatch.delenv("OVERSHARE_MAILGUN_DOMAIN", raising=False)
     monkeypatch.delenv("OVERSHARE_NOTIFY_EMAIL", raising=False)
 
     calls: list = []
@@ -410,7 +412,8 @@ def test_waitlist_notification_is_skipped_when_unconfigured(client, monkeypatch)
 
 
 def test_waitlist_notification_sends_when_configured(client, monkeypatch):
-    monkeypatch.setenv("OVERSHARE_RESEND_API_KEY", "test-key")
+    monkeypatch.setenv("OVERSHARE_MAILGUN_API_KEY", "test-key")
+    monkeypatch.setenv("OVERSHARE_MAILGUN_DOMAIN", "sandbox.mailgun.org")
     monkeypatch.setenv("OVERSHARE_NOTIFY_EMAIL", "owner@example.com")
 
     sent: list[dict] = []
@@ -428,10 +431,43 @@ def test_waitlist_notification_sends_when_configured(client, monkeypatch):
     client.post("/v1/waitlist", json={"email": "signup@example.com"})
 
     assert len(sent) == 1
-    assert sent[0]["url"] == "https://api.resend.com/emails"
-    assert sent[0]["headers"]["Authorization"] == "Bearer test-key"
-    assert sent[0]["json"]["to"] == ["owner@example.com"]
+    assert sent[0]["url"] == "https://api.mailgun.net/v3/sandbox.mailgun.org/messages"
+    # Mailgun authenticates with HTTP Basic, username literally "api".
+    assert sent[0]["auth"] == ("api", "test-key")
+    assert sent[0]["data"]["to"] == "owner@example.com"
     # Not @oversharehq.com: that domain's SPF ends in -all and does not list
-    # Resend, so mail sent from it would be dropped.
-    assert "oversharehq.com" not in sent[0]["json"]["from"]
-    assert "signup@example.com" in sent[0]["json"]["text"]
+    # Mailgun, so mail sent from it would be dropped silently.
+    assert "oversharehq.com" not in sent[0]["data"]["from"]
+    assert "signup@example.com" in sent[0]["data"]["text"]
+
+
+@pytest.mark.parametrize(
+    "present",
+    [
+        ("OVERSHARE_MAILGUN_API_KEY",),
+        ("OVERSHARE_MAILGUN_DOMAIN",),
+        ("OVERSHARE_NOTIFY_EMAIL",),
+        ("OVERSHARE_MAILGUN_API_KEY", "OVERSHARE_MAILGUN_DOMAIN"),
+    ],
+)
+def test_partial_notification_config_sends_nothing(client, monkeypatch, present):
+    """Three variables means partial configuration is a realistic mistake.
+
+    Half-configured must behave like unconfigured rather than firing a request
+    that cannot succeed — Mailgun answers a bad domain with a 404 that looks
+    nothing like a credentials problem.
+    """
+    for name in (
+        "OVERSHARE_MAILGUN_API_KEY",
+        "OVERSHARE_MAILGUN_DOMAIN",
+        "OVERSHARE_NOTIFY_EMAIL",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    for name in present:
+        monkeypatch.setenv(name, "value")
+
+    calls: list = []
+    monkeypatch.setattr("overshare.api.notify.httpx.post", lambda *a, **k: calls.append(a))
+
+    assert client.post("/v1/waitlist", json={"email": "x@example.com"}).status_code == 202
+    assert calls == []
