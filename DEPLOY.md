@@ -17,8 +17,8 @@ You need: a Fly account, `flyctl` installed and logged in, and the domain.
 fly auth login
 ```
 
-The apps must exist before their configs can deploy into them. `--no-deploy`
-creates them without building anything:
+The apps must exist before their configs can deploy into them. `fly apps create`
+registers the name without building anything:
 
 ```bash
 # from the repository root

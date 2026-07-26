@@ -15,6 +15,12 @@ primary_region = "syd"
     # which is silent, and which search engines will happily index.
     NEXT_PUBLIC_SITE_URL = "https://oversharehq.com"
 
+    # Pre-launch: the site is live but must not be indexed. Flip to "true" and
+    # rebuild only once M4 calibration has produced a real false-positive rate
+    # and the todo markers are gone. Anything other than "true" means noindex,
+    # so a typo fails closed rather than publishing.
+    NEXT_PUBLIC_INDEXABLE = "false"
+
 [env]
   # Fly private DNS. Runtime, so one image promotes between environments.
   OVERSHARE_API_URL = "http://overshare-api.internal:8000"

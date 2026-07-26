@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Newsreader } from "next/font/google";
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { BRAND, GITHUB_URL } from "@/lib/brand";
+import { INDEXABLE, SITE_URL as siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -18,10 +19,6 @@ const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
 });
 
-// Production is https://oversharehq.com. Kept configurable so preview
-// deployments emit their own canonical URLs rather than the production one.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -35,7 +32,9 @@ export const metadata: Metadata = {
     siteName: BRAND.name,
     url: siteUrl,
   },
-  robots: { index: true, follow: true },
+  robots: INDEXABLE
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
 };
 
 const NAV = [
