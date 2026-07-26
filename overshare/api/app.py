@@ -8,12 +8,13 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from .. import __version__
 from ..fetch.ssrf import BlockedTarget, validate_url
+from .notify import notify_waitlist_signup
 from .serialize import scan_to_dict
 from .store import ScanStore
 from .worker import ScanWorker
@@ -237,7 +238,9 @@ def create_app(
         return JSONResponse(scan_to_dict(record), status_code=202)
 
     @app.post("/v1/waitlist")
-    def join_waitlist(request: Request, payload: dict) -> JSONResponse:
+    def join_waitlist(
+        request: Request, payload: dict, background: BackgroundTasks
+    ) -> JSONResponse:
         email = _normalise_email(payload.get("email"))
         if email is None:
             return _error("invalid_email", "Enter a valid email address.", 400)
@@ -252,6 +255,9 @@ def create_app(
             )
 
         store.add_waitlist(email, client_ip=ip)
+        # After the response, so a slow or failing email provider cannot add
+        # latency to a signup or turn a stored address into an error.
+        background.add_task(notify_waitlist_signup, email)
         # Always the same body, whether or not the address was already stored.
         # Confirming membership would turn this into an oracle for testing
         # whether a given person uses the product.

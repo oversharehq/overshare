@@ -59,6 +59,44 @@ fly ssh console --app overshare-api -C "python -c \"import urllib.request; print
 
 ---
 
+## Waitlist notifications
+
+Opt-in. With neither variable set, signups are still stored — you just are not
+told about them, and `POST /v1/waitlist` behaves identically.
+
+```bash
+fly secrets set \
+  OVERSHARE_RESEND_API_KEY=re_xxxxxxxx \
+  OVERSHARE_NOTIFY_EMAIL=you@example.com \
+  --app overshare-api
+```
+
+Mail goes out from Resend's shared `onboarding@resend.dev`, not from
+`oversharehq.com`. That is deliberate: the domain's SPF record ends in `-all`
+and does not list Resend, so sending from it would be dropped silently. To send
+from your own domain you must add Resend's `include:` to SPF *first*, verify the
+domain in Resend, and only then set `OVERSHARE_NOTIFY_SENDER`.
+
+The send happens in a background task after the response, and every failure is
+swallowed and logged. A provider outage must never turn a stored signup into an
+error the visitor sees — they would submit again and conclude it is broken.
+
+To read the list directly:
+
+```bash
+fly ssh console --app overshare-api -C "python -c \"
+import sqlite3
+c = sqlite3.connect('/data/scans.db')
+for e, t in c.execute('SELECT email, created_at FROM waitlist ORDER BY created_at DESC'):
+    print(t, e)
+\""
+```
+
+Note the `waitlist` table is deliberately outside the retention sweep, which
+only deletes from `scans`.
+
+---
+
 ## Domain
 
 ```bash

@@ -373,3 +373,65 @@ def test_waitlist_survives_the_retention_sweep(store):
 
     count = store._conn.execute("SELECT COUNT(*) AS n FROM waitlist").fetchone()["n"]
     assert count == 1
+
+
+def test_waitlist_notification_failure_does_not_fail_the_signup(client, store, monkeypatch):
+    """The address is committed before the email is attempted.
+
+    A provider outage must not turn a stored signup into an error the visitor
+    sees, or they will submit again and assume it is broken.
+    """
+    monkeypatch.setenv("OVERSHARE_RESEND_API_KEY", "test-key")
+    monkeypatch.setenv("OVERSHARE_NOTIFY_EMAIL", "owner@example.com")
+
+    def explode(*_args, **_kwargs):
+        raise RuntimeError("provider is down")
+
+    monkeypatch.setattr("overshare.api.notify.httpx.post", explode)
+
+    response = client.post("/v1/waitlist", json={"email": "resilient@example.com"})
+
+    assert response.status_code == 202
+    count = store._conn.execute("SELECT COUNT(*) AS n FROM waitlist").fetchone()["n"]
+    assert count == 1
+
+
+def test_waitlist_notification_is_skipped_when_unconfigured(client, monkeypatch):
+    monkeypatch.delenv("OVERSHARE_RESEND_API_KEY", raising=False)
+    monkeypatch.delenv("OVERSHARE_NOTIFY_EMAIL", raising=False)
+
+    calls: list = []
+    monkeypatch.setattr(
+        "overshare.api.notify.httpx.post", lambda *a, **k: calls.append(a)
+    )
+
+    assert client.post("/v1/waitlist", json={"email": "quiet@example.com"}).status_code == 202
+    assert calls == []
+
+
+def test_waitlist_notification_sends_when_configured(client, monkeypatch):
+    monkeypatch.setenv("OVERSHARE_RESEND_API_KEY", "test-key")
+    monkeypatch.setenv("OVERSHARE_NOTIFY_EMAIL", "owner@example.com")
+
+    sent: list[dict] = []
+
+    class Response:
+        def raise_for_status(self) -> None:
+            pass
+
+    def capture(url, **kwargs):
+        sent.append({"url": url, **kwargs})
+        return Response()
+
+    monkeypatch.setattr("overshare.api.notify.httpx.post", capture)
+
+    client.post("/v1/waitlist", json={"email": "signup@example.com"})
+
+    assert len(sent) == 1
+    assert sent[0]["url"] == "https://api.resend.com/emails"
+    assert sent[0]["headers"]["Authorization"] == "Bearer test-key"
+    assert sent[0]["json"]["to"] == ["owner@example.com"]
+    # Not @oversharehq.com: that domain's SPF ends in -all and does not list
+    # Resend, so mail sent from it would be dropped.
+    assert "oversharehq.com" not in sent[0]["json"]["from"]
+    assert "signup@example.com" in sent[0]["json"]["text"]
