@@ -2,7 +2,6 @@ import Link from "next/link";
 import { CommandBlock } from "@/components/CommandBlock";
 import { Code, Figure, Note, Prose, Section, Shell } from "@/components/Paper";
 import { ScanForm } from "@/components/ScanForm";
-import { Todo } from "@/components/Todo";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { BRAND, GITHUB_URL } from "@/lib/brand";
 import { PLATFORMS } from "@/lib/platforms";
@@ -153,12 +152,6 @@ export default function HomePage() {
               >
                 View on GitHub ↗
               </a>
-              <div className="mt-2">
-                <Todo>
-                  Repo is not published, so this link 404s. Also gates the PyPI
-                  install above.
-                </Todo>
-              </div>
             </div>
           </div>
 
