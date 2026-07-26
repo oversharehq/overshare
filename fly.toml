@@ -17,7 +17,12 @@ app = "overshare-api"
 primary_region = "syd"
 
 [env]
-  OVERSHARE_HOST = "0.0.0.0"
+  # "::" and not "0.0.0.0". Fly's private network is IPv6-only, so
+  # overshare-api.internal resolves to an fdaa: address — an IPv4-only bind
+  # listens on a stack nothing can reach and every proxied call 502s while the
+  # app looks perfectly healthy on 127.0.0.1. Linux accepts IPv4 on a "::"
+  # socket, so this covers both.
+  OVERSHARE_HOST = "::"
   OVERSHARE_PORT = "8000"
   OVERSHARE_DB_PATH = "/data/scans.db"
   OVERSHARE_MAX_WORKERS = "2"

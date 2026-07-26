@@ -4,8 +4,9 @@ Two Fly apps: `overshare-api` (private, no public address) and `overshare-web`
 (public, serves `oversharehq.com`). Each has its own `fly.toml` beside its own
 Dockerfile, so neither `fly deploy` needs path flags.
 
-Nothing here has been run yet — this is written from the configs, not from a
-deployment that happened. Expect to correct it the first time through.
+First run through on 2026-07-26. What follows now describes a deploy that
+happened rather than one inferred from the configs, and the corrections it
+needed are recorded in "Things that will bite".
 
 ---
 
@@ -65,13 +66,63 @@ fly certs add oversharehq.com --app overshare-web
 fly certs add www.oversharehq.com --app overshare-web
 ```
 
-`fly certs show` prints the records to add at the registrar. Apex needs the A
-and AAAA records Fly gives you; `www` is a CNAME to `overshare-web.fly.dev`.
-Certificates issue once DNS resolves, usually within minutes.
+`fly certs show` prints the records to add. Both names take the A and AAAA
+records Fly gives you — `www` included. Do not point `www` at the apex with a
+CNAME: it resolves correctly and still never verifies, because Fly's IPv4 is
+shared and its edge only serves a hostname it has independently confirmed.
+
+**`www` also needs a DNS-01 challenge record, and the apex does not.** This cost
+an hour on the first run. `force_https = true` makes the edge 301 everything on
+port 80, `/.well-known/acme-challenge/` included, so HTTP-01 for a new hostname
+bounces to an HTTPS endpoint that has no certificate yet — which is the thing
+being issued. Fly's proxy normally intercepts the challenge before redirecting,
+but only for hostnames it already knows, so a brand-new `www` cannot bootstrap.
+DNS-01 sidesteps HTTP entirely:
+
+```
+CNAME  _acme-challenge.www  →  www.oversharehq.com.<app-id>.flydns.net.
+```
+
+`fly certs setup www.<domain>` prints the exact target. Issuance followed within
+about a minute of that record resolving. Keep the `www` A and AAAA records —
+they carry traffic; this one only carries validation.
+
+Symptoms of getting this wrong: `fly certs list` reports `Issued` while
+`fly certs check` reports `Not verified`, and TLS fails with a connection reset
+rather than a certificate error. Trust `check`, not `list`.
 
 ---
 
 ## Things that will bite
+
+**The API must bind `::`, not `0.0.0.0`.** This one actually happened. Fly's
+private network is IPv6-only, so `overshare-api.internal` resolves to an `fdaa:`
+address. An IPv4-only bind listens on a stack nothing on the mesh can reach:
+`fly ssh console -C` against `127.0.0.1:8000` returns a healthy `{"status":"ok"}`
+while every call through the web proxy 502s with "The scanner is not
+responding." The API looks fine from every angle except the one that matters.
+`OVERSHARE_HOST = "::"` in `fly.toml` fixes it, and Linux accepts IPv4 on a `::`
+socket so nothing is lost. To check which stack is actually listening, `netstat`
+is not in the image — read `/proc/net/tcp6` and look for a listener on `1F40`
+(port 8000).
+
+**`fly deploy` warns the web app is not listening on `0.0.0.0:3000`.** Ignore
+it. The probe runs before Next has finished booting, so the only socket open at
+that moment is `hallpass` on 22. The app comes up fine.
+
+**Fly creates two web machines, not one.** `min_machines_running = 1` is a floor,
+not a cap, and the deploy adds a second machine for zero-downtime releases. Fine
+for the frontend, which is stateless — but it is why the same default must never
+be allowed to apply to the API.
+
+**GoDaddy ships records that fight this setup.** The apex carries a managed A
+record displayed as "WebsiteBuilder Site" rather than an IP, and it must be
+deleted or two thirds of visitors land on a parking page instead of the site —
+intermittently, which reads as a flaky deploy rather than a DNS fault. The
+pre-existing `www` CNAME to the apex should be *kept*: `www` then follows the
+apex automatically, Fly's addresses stay defined in one place, and adding
+A/AAAA records for `www` on top of it is rejected anyway, since a CNAME cannot
+coexist with other records on the same name.
 
 **`NEXT_PUBLIC_SITE_URL` is baked at build time.** It is a `[build.args]` entry
 in `web/fly.toml`, not an env var. `sitemap.xml`, `robots.txt` and every
