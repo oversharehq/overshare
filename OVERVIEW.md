@@ -350,7 +350,7 @@ which is surprising the first time it happens.
 |---|---|
 | **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 231 tests. |
 | **M2 — RLS check (Tier B)** | Not started. Reports currently say RLS was *not* tested. |
-| **M3 — deploy + UI** | Built, not deployed. API, frontend, Docker and compose all work end to end locally. |
+| **M3 — deploy + UI** | Done. Live on `oversharehq.com` since 2026-07-26, `noindex` until M4. |
 | **CI channel** | Action and SARIF done. Usable only once the repo is public and `v1` is tagged. |
 | **M4 — calibration** | Not started. This is the differentiator. |
 | **M5 — paid tier** | Not started. `fix` field exists in the contract and is always null. |
@@ -402,8 +402,20 @@ command each — it waits on the trademark search, nothing else.
 
 ### Before real traffic
 
-**Nothing is deployed.** Fly is chosen and configured (`fly.toml`, `web/fly.toml`, `DEPLOY.md`),
-but no account, app, volume or domain exists yet.
+**Deployed 2026-07-26.** Live on `oversharehq.com` and `www.`, both with valid certificates, on
+two Fly apps in `syd` — the API private with no public address, as designed. The site is
+`noindex` (`NEXT_PUBLIC_INDEXABLE`, a build arg) until M4 produces a real false-positive rate and
+the `todo` markers are gone. `DEPLOY.md` now describes a deploy that happened; read its "Things
+that will bite" before the next one.
+
+**No Content-Security-Policy on the site.** Every other header is set, and the site scores A (92)
+against its own scanner. A useful CSP needs a per-request nonce, which in Next means dynamic
+rendering on every page; a CSP with `'unsafe-inline'` instead would trip our own
+`transport.header.csp_weak` check. Deliberately deferred rather than faked — see
+`web/next.config.ts`.
+
+**SPF on `oversharehq.com` ends in `?all`**, GoDaddy's default, which tells receivers to do
+nothing about spoofed mail. DMARC is `p=quarantine`. Tighten to `-all` before launch.
 
 **No egress control.** Workers now run in separate processes, which bounds a crash to one scan, but
 that is blast-radius containment and not a sandbox. Fly has no per-app outbound firewall, so what
