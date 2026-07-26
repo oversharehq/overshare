@@ -272,7 +272,7 @@ a provider runtime, a job table over a message bus. Nothing here is hard to move
 
 Honest inventory, because a plan and a running system are easy to conflate.
 
-**Real and verified.** The scanner: 27 checks, 17 secret patterns, 221 tests. The
+**Real and verified.** The scanner: 27 checks, 17 secret patterns, 231 tests. The
 API, the job store, the retention purge. The frontend and the proxy between them,
 exercised end to end. Process-isolated workers, checked against a live API. SARIF
 output, validated against the official schema. The GitHub Action, which runs
@@ -280,8 +280,15 @@ itself in CI on every push. Docker images for both services.
 
 **Real but unproven.** The Fly deployment configuration exists and nothing has
 ever been deployed with it. The Action's SARIF *upload* step has never executed,
-because the repository is private and the upload API is unavailable there. The
-rendered UI had never been looked at in a browser until today.
+because the repository is private and the upload API is unavailable there.
+
+The rendered UI is no longer among these. On 2026-07-25 the frontend was restyled
+as a technical document rather than a dashboard — paper, serif prose, mono data,
+rules instead of cards — because the thing being sold is published calibration
+and the page should look like something measured. Every surface was then checked
+in a real browser at desktop and phone widths, and the report was checked under
+print emulation, since that is the artifact a customer is handed. Chrome only;
+Safari and Firefox are still unlooked at.
 
 **Not built.** Row-level-security testing — every Supabase report currently says
 so explicitly rather than implying a pass. Generated fixes: the `fix` field
@@ -330,6 +337,7 @@ tonight.
 | What's the wire format between frontend and API | `API_CONTRACT.md` |
 | How do I get it onto a server | `DEPLOY.md` |
 | Where is the legal line | `ACCEPTABLE_USE.md` |
+| How do I work on the UI without breaking the design | `web/README.md` |
 | Who is this for, how is it sold | `marketing/00-strategy.md` |
 | Why is it called this | `marketing/01-naming.md` |
 | What was the original plan | `overshare-build-brief.md` |

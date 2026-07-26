@@ -12,52 +12,54 @@ export function FindingCard({ finding }: { finding: Finding }) {
     <details
       id={finding.check_id}
       open={expandedByDefault}
-      className={`group scroll-mt-6 rounded-md border border-l-4 border-slate-200 bg-white shadow-sm ${style.accent}`}
+      className="group scroll-mt-6 border-b border-rule"
     >
-      <summary className="flex cursor-pointer list-none items-start gap-3 p-4 [&::-webkit-details-marker]:hidden">
-        <SeverityChip severity={finding.severity} />
+      <summary className="flex cursor-pointer list-none items-start gap-4 py-4 [&::-webkit-details-marker]:hidden">
+        {/* The severity bar runs the full height of the row, so the list can be
+            skimmed down the left edge without reading a single label. */}
+        <span
+          className={`mt-1 h-8 w-[3px] shrink-0 ${style.bar}`}
+          aria-hidden
+        />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-slate-900">{finding.title}</h3>
-          <p className="mt-0.5 font-mono text-xs text-slate-500">
-            {finding.check_id}
+          <SeverityChip severity={finding.severity} />
+          <h3 className="mt-1.5 text-[1.05rem] leading-snug font-medium text-ink transition-colors group-hover:text-flag">
+            {finding.title}
+          </h3>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 font-mono text-xs text-mute">
+            <span>{finding.check_id}</span>
             {finding.confidence === "probable" && (
-              <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 font-sans text-slate-600">
+              <span className="border-l border-rule-firm pl-3 text-ochre">
                 needs confirmation
               </span>
             )}
           </p>
         </div>
-        <svg
-          className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-90"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden
-        >
-          <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <span className="label shrink-0 pt-1 text-faint transition-colors group-open:text-flag">
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">&minus;</span>
+        </span>
       </summary>
 
-      <div className="border-t border-slate-100 px-4 py-4 text-sm">
-        <p className="text-slate-700">{finding.detail}</p>
+      <div className="pb-5 pl-7 text-[0.95rem]">
+        <p className="max-w-[34rem] leading-[1.65] text-ink-soft">
+          {finding.detail}
+        </p>
 
         {finding.confidence === "probable" && (
-          <p className="mt-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            This one matched a pattern rather than being confirmed outright. Check
-            it before acting on it.
+          <p className="mt-3 max-w-[34rem] border-l-2 border-ochre bg-ochre-wash px-3 py-2 font-mono text-xs leading-[1.6] text-ochre">
+            This one matched a pattern rather than being confirmed outright.
+            Check it before acting on it.
           </p>
         )}
 
         {finding.evidence && (
-          <div className="mt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Evidence
-            </p>
-            <pre className="mt-1 overflow-x-auto rounded border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-800">
+          <div className="mt-5">
+            <p className="label text-faint">Evidence</p>
+            <pre className="mt-1.5 overflow-x-auto bg-plate px-3 py-2.5 font-mono text-xs text-paper">
               {finding.evidence}
             </pre>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1.5 font-mono text-[0.7rem] text-faint">
               Secrets are truncated. {BRAND.name} never stores or displays a
               full credential.
             </p>
@@ -65,22 +67,20 @@ export function FindingCard({ finding }: { finding: Finding }) {
         )}
 
         {finding.location && (
-          <div className="mt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Where
-            </p>
-            <p className="mt-1 break-all font-mono text-xs text-slate-700">
+          <div className="mt-5">
+            <p className="label text-faint">Where</p>
+            <p className="mt-1.5 break-all font-mono text-xs text-ink">
               {finding.location}
             </p>
           </div>
         )}
 
         {finding.remediation && (
-          <div className="mt-4 rounded border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              How to fix
+          <div className="mt-5 max-w-[34rem] border-l-2 border-rule-firm bg-inset px-4 py-3">
+            <p className="label text-mute">How to fix</p>
+            <p className="mt-1.5 leading-[1.6] text-ink">
+              {finding.remediation}
             </p>
-            <p className="mt-1 text-slate-700">{finding.remediation}</p>
           </div>
         )}
 
@@ -92,29 +92,12 @@ export function FindingCard({ finding }: { finding: Finding }) {
 
 function LockedFix({ finding }: { finding: Finding }) {
   return (
-    <div className="print-hidden mt-4 rounded border border-dashed border-slate-300 bg-white p-3">
-      <div className="flex items-start gap-2">
-        <svg
-          className="mt-0.5 h-4 w-4 shrink-0 text-slate-400"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          aria-hidden
-        >
-          <rect x="3" y="7" width="10" height="6" rx="1" />
-          <path d="M5.5 7V5a2.5 2.5 0 015 0v2" strokeLinecap="round" />
-        </svg>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Ready-to-apply fix
-          </p>
-          <p className="mt-1 text-slate-600">
-            {fixTeaser(finding.check_id)} Available on a paid scan, with the change
-            written against your app rather than a generic example.
-          </p>
-        </div>
-      </div>
+    <div className="print-hidden mt-4 max-w-[34rem] border border-dashed border-rule-firm px-4 py-3">
+      <p className="label text-faint">Ready-to-apply fix</p>
+      <p className="mt-1.5 leading-[1.6] text-mute">
+        {fixTeaser(finding.check_id)} Available on a paid scan, with the change
+        written against your app rather than a generic example.
+      </p>
     </div>
   );
 }

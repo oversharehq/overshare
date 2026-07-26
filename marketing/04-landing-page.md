@@ -1,9 +1,14 @@
 # Landing page copy
 
-**For the frontend agent.** `web/app/page.tsx` is currently the unmodified Next.js template — this
-is the copy to build against. Product is **Overshare**, command `overshare`, site
-`oversharehq.com` (see `01-naming.md`). Note the codebase still carries the old name — rename
-tracked in `01-naming.md` §7.
+**This is the spec of record for `web/`.** The landing page is built from it and the code rename is
+done, so this file now leads rather than follows: change positioning copy here first, then in
+`web/`. Product is **Overshare**, command `overshare`, site `oversharehq.com` (see `01-naming.md`).
+
+Outstanding content debt on the built page, per `OVERVIEW.md` §7: no measured false-positive rate
+(needs M4), `METHODOLOGY.md` doesn't exist yet, no acceptable-use page, and no working email
+capture for the hosted waitlist. Each TODO marker is written so the surrounding sentence stays true
+if the marker is deleted — keep that property. Nobody has looked at the rendered page in a browser
+yet.
 
 **Structural principle:** this page serves two audiences (`02-messaging.md` §1) who want opposite
 things. The developer wants to `pip install`; the founder wants to paste a URL. **Give them
@@ -97,18 +102,28 @@ This section is the reason to choose us. Give it real estate.
 
 Code block:
 ```yaml
-name: security
-on: [push]
+permissions:
+  security-events: write
+
 jobs:
-  scan:
+  overshare:
     runs-on: ubuntu-latest
     steps:
-      - run: pip install overshare
-      - run: overshare https://myapp.com --fail-on high
+      - uses: oversharehq/overshare@v1
+        with:
+          url: https://myapp.com
+          fail-on: high
 ```
 
-> Exit code 1 on findings at or above your threshold. JSON output for anything else you want to
-> do with it.
+> Findings show up in your repository's Security tab, and GitHub tracks each one as new, still
+> open, or fixed across runs. Your build fails on anything at or above your threshold.
+>
+> Add a weekly `schedule:` trigger and you also catch what you didn't deploy — a certificate about
+> to expire, a DNS record that changed, a provider default that moved underneath you.
+
+**Note for the build:** show the four-line `uses:` form, not a `pip install` script. The whole point
+of this section is that adoption costs one copied block. The raw CLI belongs in the hero, where the
+developer who wants to run it locally is already looking.
 
 ---
 
@@ -176,9 +191,9 @@ readers, and it is how a faceless brand earns trust.
 **Body**
 > Finding problems is the free part — and it stays free, including the Row Level Security check.
 >
-> Overshare Cloud is for what comes next: history that shows what regressed between deploys,
-> scheduled re-scans so you hear about it before your customer does, and a verifiable badge you can
-> put in front of someone asking whether you're safe to buy from.
+> Overshare Cloud is for what comes next: history that outlives the free 30-day window and shows
+> what regressed between deploys, scheduled re-scans so you hear about it before your customer does,
+> and a verifiable badge you can put in front of someone asking whether you're safe to buy from.
 >
 > When you'd rather not write the fix yourself, a higher tier generates it against your actual
 > schema and opens it as a pull request.
@@ -212,7 +227,18 @@ subscription rung. Do not paywall Tier B; the free scan has to beat the incumben
 > is `service_role`, because it bypasses RLS entirely.
 
 **Will you store my scan results?**
-> [Answer honestly once brief §12 retention is decided. Do not ship the page with this unresolved.]
+> For 30 days, then they're deleted automatically. A stored scan is a list of weaknesses in a live
+> app, so keeping it forever would make our database worth attacking — the shortest retention that
+> still lets you reload a report and compare two deploys is the right one.
+>
+> Secrets we find are redacted before anything is written down. Report pages aren't indexed by
+> search engines. If you'd rather we kept nothing at all, run the CLI — it stores nothing anywhere
+> and never sends your results to us.
+
+**Can I keep longer history?**
+> That's the paid tier. 30 days is deliberately enough to see whether your last deploy made things
+> worse; keeping months of it, with the diffs between runs and an alert when something regresses, is
+> what Overshare Cloud sells.
 
 **What if it's wrong?**
 > Open an issue. False positives are treated as bugs, not noise — a scanner people stop trusting
@@ -231,3 +257,30 @@ subscription rung. Do not paywall Tier B; the free scan has to beat the incumben
 - Page must be fast and work without JS for the content sections. A slow security tool site is an
   argument against itself.
 - Placeholder statistics are forbidden. If a number isn't measured yet, omit the sentence.
+
+## Visual treatment
+
+Settled 2026-07-25. The page is set as a **technical document, not a SaaS landing page**: warm paper
+ground, serif for prose and headlines, mono for every label and datum, hairline rules instead of
+cards, numbered sections, asides in a real margin column, and the terminal output presented as a
+captioned figure rather than a hero screenshot.
+
+This is downstream of the positioning, not a taste call. The differentiator is published calibration
+and stated limits, so the page should read like something measured and written down. Two alternatives
+were rejected: all-mono terminal brutalism, and a dark panel with phosphor accents — the latter
+because it drifts toward the security theatre §5 of `02-messaging.md` rules out. The previous look
+was stock Tailwind, which reads as generic AI-generated UI and quietly argues against a product whose
+whole pitch is rigour.
+
+Consequences for anyone writing copy against this spec:
+
+- **Margin notes must be real asides**, drawn from the same approved copy as the body. Don't invent a
+  sentence to fill the gutter, and don't split an approved line between the body and the margin. The
+  note in the CI section is the existing exit-code sentence; the one in the limits section is the
+  existing "we would rather tell you where the edges are" line.
+- **Both CTAs now resolve.** "Read the methodology" points at `/methodology`, and the legality
+  section points at `/acceptable-use`. Copy for those pages lives in `METHODOLOGY.md` and
+  `ACCEPTABLE_USE.md`, not here.
+- Section headings, severity penalties, grade thresholds and the retention window are checked against
+  the scanner by `tests/test_docs_sync.py`. Positioning copy is free to change; those numbers are
+  not.

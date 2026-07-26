@@ -1,20 +1,91 @@
 @import "tailwindcss";
 
+/**
+ * The interface is styled as a technical document rather than a dashboard: warm
+ * paper ground, serif for prose, mono for every label and datum, hairline rules
+ * instead of cards. That is a deliberate argument — the differentiator is
+ * published methodology, so the page should look like something measured and
+ * written down, not like a product with a growth team.
+ */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo,
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, "Times New Roman",
+    serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo,
     Consolas, monospace;
+
+  /* Ground and ink. Everything is warm — no cool greys anywhere. */
+  --color-paper: #f6f3ec;
+  --color-sheet: #fdfbf6;
+  --color-inset: #ece7da;
+  --color-plate: #1e1b16;
+
+  --color-ink: #1a1815;
+  --color-ink-soft: #413b32;
+  --color-mute: #6d6558;
+  --color-faint: #9b9384;
+
+  --color-rule: #dcd5c5;
+  --color-rule-firm: #bbb19c;
+
+  /* Two hues carry severity. Vermilion reads as a proof-reader's mark, which
+     is the right register for "this is wrong" — see lib/severity.ts. */
+  --color-flag: #ab3b23;
+  --color-flag-wash: #f4e5df;
+  --color-ochre: #8a6420;
+  --color-ochre-wash: #f2e9d5;
+  --color-pass: #3d6b4f;
+  --color-pass-wash: #e5ebe3;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
+@layer components {
+  /* The mono micro-label above almost every block. Colour is left to the
+     caller so `text-flag` and friends still win. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
 }
 
-body {
-  background-color: var(--color-slate-50);
-  color: var(--color-slate-900);
-  -webkit-font-smoothing: antialiased;
+/* These belong in `base` so ordinary utilities still beat them — unlayered CSS
+   outranks Tailwind's layered utilities no matter how specific the utility is,
+   which silently makes things like `outline-none` stop working. */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-feature-settings: "kern" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Paper grain. Inline so it costs no request, and faint enough to read as
+     texture rather than noise. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    background-color: var(--color-flag);
+    color: var(--color-sheet);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-flag);
+    outline-offset: 2px;
+  }
 }
 
 /* The report is a document people hand to a customer, so it needs to print. */
@@ -25,5 +96,26 @@ body {
 
   body {
     background: white;
+  }
+
+  body::before {
+    display: none;
+  }
+
+  /* Findings are <details>; a printed report must not hide any of them. */
+  details > summary {
+    list-style: none;
+  }
+
+  details:not([open]) > *:not(summary) {
+    display: revert !important;
+  }
+
+  /* Evidence is shown on an ink plate on screen. On paper that is a block of
+     toner that reads worse than the inverse, so flip it. */
+  pre {
+    background: white !important;
+    color: black !important;
+    border: 1px solid var(--color-rule-firm);
   }
 }

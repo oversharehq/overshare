@@ -46,10 +46,11 @@ jobs:
       - run: npx tsc --noEmit
       - run: npx eslint .
 
-  action:
-    # Proves the composite action still resolves and installs. It scans the
-    # bundled vulnerable app rather than a live site, so CI never sends traffic
-    # to a third party.
+  sarif:
+    # Exercises the CLI's SARIF output against the bundled vulnerable app, which
+    # is the only target guaranteed to produce findings across every severity.
+    # Offline: no traffic leaves the runner. This does NOT touch action.yml —
+    # see the `action` job for that.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,3 +75,49 @@ jobs:
           pip install --quiet check-jsonschema
           check-jsonschema --schemafile https://json.schemastore.org/sarif-2.1.0.json \
             overshare.sarif
+
+  action:
+    # Runs action.yml itself, via `uses: ./`, which is the only way to cover the
+    # composite's own logic: installing from $GITHUB_ACTION_PATH, passing inputs
+    # through as env rather than interpolating them, capturing the scanner's exit
+    # code past `set -e`, and writing the declared outputs.
+    #
+    # The target has to be public. The SSRF guard rejects loopback by design and
+    # the Action deliberately exposes no flag to disable it, so it cannot be
+    # pointed at the bundled app the way the CLI can. example.com is IANA's
+    # reserved documentation domain, kept for exactly this purpose, and the scan
+    # is a single passive GET with footprint checks off.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the action against a reserved public domain
+        id: scan
+        uses: ./
+        with:
+          url: https://example.com
+          # `never` keeps the assertions below independent of whichever headers
+          # example.com happens to serve today.
+          fail-on: never
+          no-footprint: 'true'
+          sarif-file: action-run.sarif
+          # This repo is private and has no Advanced Security, so the upload API
+          # is unavailable. The upload step and the fail-on gate that follows it
+          # stay unexercised here — verify those in a real public repo before
+          # launch, per marketing/07-launch.md.
+          upload-sarif: 'false'
+      - name: Check the action's declared outputs and report
+        env:
+          EXIT_CODE: ${{ steps.scan.outputs.exit-code }}
+          SARIF_FILE: ${{ steps.scan.outputs.sarif-file }}
+        run: |
+          # An unset exit-code means the $GITHUB_OUTPUT write silently broke,
+          # which would make the fail-on gate a no-op and every scan look clean.
+          case "$EXIT_CODE" in
+            0|1) ;;
+            *) echo "::error::expected exit-code 0 or 1, got '$EXIT_CODE'"; exit 1 ;;
+          esac
+          test "$SARIF_FILE" = "action-run.sarif"
+          test -s "$SARIF_FILE"
+          pip install --quiet check-jsonschema
+          check-jsonschema --schemafile https://json.schemastore.org/sarif-2.1.0.json \
+            "$SARIF_FILE"

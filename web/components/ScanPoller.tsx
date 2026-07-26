@@ -46,9 +46,9 @@ export function ScanPoller({ id }: { id: string }) {
 
   if (!scan) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="h-3 w-40 animate-pulse rounded bg-slate-200" />
-        <div className="mt-4 h-3 w-64 animate-pulse rounded bg-slate-100" />
+      <div className="border-t-2 border-ink pt-6">
+        <div className="h-2.5 w-40 animate-pulse bg-inset" />
+        <div className="mt-4 h-2.5 w-64 animate-pulse bg-inset" />
       </div>
     );
   }
@@ -74,14 +74,17 @@ export function ScanPoller({ id }: { id: string }) {
 
 function Failure({ title, message }: { title: string; message: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 className="text-lg font-semibold text-slate-900">{title}</h1>
-      <p className="mt-2 text-sm text-slate-600">{message}</p>
+    <div className="border-t-2 border-flag pt-6">
+      <p className="label text-flag">Scan failed</p>
+      <h1 className="mt-3 text-[1.6rem] leading-tight font-medium">{title}</h1>
+      <p className="mt-3 max-w-[34rem] text-[0.95rem] leading-[1.6] text-ink-soft">
+        {message}
+      </p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+        className="label mt-7 inline-block bg-ink px-5 py-3 text-paper transition-colors hover:bg-flag"
       >
-        Start a new scan
+        Start a new scan →
       </Link>
     </div>
   );

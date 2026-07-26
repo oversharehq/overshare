@@ -1,4 +1,5 @@
 import type { Platform } from "@/lib/types";
+import { Block } from "./Paper";
 
 const LABELS: Record<string, string> = {
   builder: "Built with",
@@ -18,29 +19,29 @@ export function PlatformPanel({ platform }: { platform: Platform }) {
   if (entries.length === 0) return null;
 
   return (
-    <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900">Detected stack</h2>
-      <p className="mt-1 text-xs text-slate-500">
+    <Block index="02" title="Detected stack">
+      <p className="max-w-[34rem] text-[0.95rem] leading-[1.6] text-ink-soft">
         Fingerprinted from what the app serves publicly. This determines which
         checks are relevant.
       </p>
 
-      <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+      <dl className="mt-5 grid grid-cols-2 border-t border-rule sm:grid-cols-4">
         {entries.map(([key, value]) => (
-          <div key={key}>
-            <dt className="text-xs uppercase tracking-wide text-slate-500">
-              {LABELS[key]}
-            </dt>
-            <dd className="mt-0.5 font-mono text-sm text-slate-900">{value}</dd>
+          <div
+            key={key}
+            className="border-b border-rule py-3 sm:border-b-0 sm:border-r sm:px-3 sm:last:border-r-0 sm:first:pl-0"
+          >
+            <dt className="label text-faint">{LABELS[key]}</dt>
+            <dd className="mt-1.5 font-mono text-sm text-ink">{value}</dd>
           </div>
         ))}
       </dl>
 
       {platform.api_url && (
-        <p className="mt-4 break-all border-t border-slate-100 pt-3 font-mono text-xs text-slate-600">
+        <p className="mt-4 break-all font-mono text-xs text-mute">
           {platform.api_url}
         </p>
       )}
-    </section>
+    </Block>
   );
 }

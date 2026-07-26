@@ -8,9 +8,9 @@
  */
 export function Todo({ children }: { children: React.ReactNode }) {
   return (
-    <span className="my-1 inline-flex items-start gap-1.5 rounded border border-amber-400 bg-amber-50 px-2 py-1 align-middle text-xs font-medium text-amber-900">
-      <span className="font-mono font-bold uppercase tracking-wide">todo</span>
-      <span className="font-normal">{children}</span>
+    <span className="my-1 inline-flex items-baseline gap-2 border-l-2 border-flag bg-flag-wash px-2.5 py-1.5 align-middle font-mono text-xs leading-[1.6] text-flag">
+      <span className="label shrink-0 font-semibold">todo</span>
+      <span>{children}</span>
     </span>
   );
 }

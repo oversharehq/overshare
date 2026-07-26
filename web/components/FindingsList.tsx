@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Finding } from "@/lib/types";
+import { Block } from "./Paper";
 import { FindingCard } from "./FindingCard";
 
 export function FindingsList({ findings }: { findings: Finding[] }) {
@@ -11,19 +12,20 @@ export function FindingsList({ findings }: { findings: Finding[] }) {
   const informational = findings.filter((finding) => finding.severity === "info");
 
   return (
-    <section className="mt-8">
-      <h2 className="text-lg font-semibold text-slate-900">Findings</h2>
-
+    <Block index="03" title="Findings">
       {actionable.length === 0 ? (
-        <p className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <p className="max-w-[34rem] border-l-2 border-pass bg-pass-wash px-4 py-3 text-[0.95rem] leading-[1.6] text-pass">
           Nothing actionable on the public surface. That is a genuinely good
           result — but read the scope notes below, because it does not mean the
           app is secure overall.
         </p>
       ) : (
-        <div className="mt-3 space-y-3">
+        <div className="border-t border-rule">
           {actionable.map((finding) => (
-            <FindingCard key={`${finding.check_id}:${finding.location}`} finding={finding} />
+            <FindingCard
+              key={`${finding.check_id}:${finding.location}`}
+              finding={finding}
+            />
           ))}
         </div>
       )}
@@ -34,14 +36,14 @@ export function FindingsList({ findings }: { findings: Finding[] }) {
             type="button"
             onClick={() => setShowInfo((value) => !value)}
             aria-expanded={showInfo}
-            className="print-hidden text-sm font-medium text-slate-600 underline underline-offset-4 hover:text-slate-900"
+            className="label print-hidden text-mute underline decoration-rule-firm underline-offset-4 transition-colors hover:text-flag"
           >
             {showInfo ? "Hide" : "Show"} {informational.length} informational{" "}
             {informational.length === 1 ? "note" : "notes"}
           </button>
 
           {showInfo && (
-            <div className="mt-3 space-y-3">
+            <div className="mt-4 border-t border-rule">
               {informational.map((finding) => (
                 <FindingCard
                   key={`${finding.check_id}:${finding.location}`}
@@ -52,6 +54,6 @@ export function FindingsList({ findings }: { findings: Finding[] }) {
           )}
         </div>
       )}
-    </section>
+    </Block>
   );
 }

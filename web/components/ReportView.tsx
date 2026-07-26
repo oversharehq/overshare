@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { BRAND } from "@/lib/brand";
 import type { Scan, ScanResult } from "@/lib/types";
 import { FindingsList } from "./FindingsList";
+import { Block } from "./Paper";
 import { PlatformPanel } from "./PlatformPanel";
 import { ScopeNotice } from "./ScopeNotice";
 import { ScoreCard } from "./ScoreCard";
@@ -13,63 +15,79 @@ export function ReportView({ scan, result }: { scan: Scan; result: ScanResult })
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Scan report
-          </p>
-          <h1 className="mt-1 break-all text-xl font-semibold text-slate-900">
-            {result.url}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {completed && (
-              <time dateTime={completed.toISOString()}>
-                {completed.toLocaleString()}
-              </time>
-            )}
-            {completed && " · "}
-            Completed in {result.duration_seconds}s · Passive scan
-          </p>
+      {/* Document head. The URL is the title of this report, so it is set as
+          one — the rest is filing information in mono. */}
+      <header className="border-b-2 border-ink pb-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
+          <p className="label text-flag">{BRAND.name} scan report</p>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="label print-hidden border border-rule-firm px-3 py-1.5 text-mute transition-colors hover:border-ink hover:text-ink"
+          >
+            Save as PDF
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="print-hidden rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-        >
-          Save as PDF
-        </button>
-      </div>
+        <h1 className="mt-3 max-w-[38rem] break-all text-[1.7rem] leading-tight font-medium">
+          {result.url}
+        </h1>
 
-      <ScoreCard result={result} />
+        <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 font-mono text-xs text-mute">
+          {completed && (
+            <div className="flex gap-2">
+              <dt className="text-faint">Completed</dt>
+              <dd>
+                <time dateTime={completed.toISOString()}>
+                  {completed.toLocaleString()}
+                </time>
+              </dd>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <dt className="text-faint">Duration</dt>
+            <dd className="tabular-nums">{result.duration_seconds}s</dd>
+          </div>
+          <div className="flex gap-2">
+            <dt className="text-faint">Tier</dt>
+            <dd>Passive scan</dd>
+          </div>
+        </dl>
+      </header>
+
+      <Block index="01" title="Result">
+        <ScoreCard result={result} />
+      </Block>
+
       <PlatformPanel platform={result.platform} />
       <FindingsList findings={result.findings} />
       <ScopeNotice result={result} />
 
       {fixable > 0 && (
-        <section className="print-hidden mt-8 rounded-lg border border-slate-900 bg-slate-900 p-6 text-white">
-          <h2 className="text-base font-semibold">
+        <section className="print-hidden mt-12 bg-plate p-7">
+          <p className="label text-flag">Overshare Cloud</p>
+          <h2 className="mt-3 max-w-md text-[1.4rem] leading-snug font-medium text-paper">
             {fixable} of these have a fix we can write for you
           </h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-300">
+          <p className="mt-3 max-w-xl text-[0.95rem] leading-[1.6] text-rule">
             A paid scan turns each finding into the actual change for your app —
             the policy, the header, the config — plus a re-scan that verifies the
             fix landed, and a report you can hand to a customer asking about
             security.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
               disabled
-              className="cursor-not-allowed rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-900 opacity-60"
+              className="label cursor-not-allowed border border-mute/60 px-4 py-2.5 text-faint"
             >
               Coming soon
             </button>
             <Link
               href="/"
-              className="rounded-md border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800"
+              className="label border border-transparent bg-paper px-4 py-2.5 text-plate transition-colors hover:bg-flag hover:text-paper"
             >
-              Scan another app
+              Scan another app →
             </Link>
           </div>
         </section>

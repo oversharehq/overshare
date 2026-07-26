@@ -41,7 +41,9 @@ export function ScanForm({
 
   return (
     <form onSubmit={onSubmit} noValidate>
-      <div className="flex flex-col gap-3 sm:flex-row">
+      {/* A ruled line to write on rather than a boxed widget — the input reads
+          as a field on a form, which is what it is. */}
+      <div className="flex items-stretch border-b-2 border-ink focus-within:border-flag">
         <input
           type="url"
           name="url"
@@ -52,14 +54,14 @@ export function ScanForm({
           aria-label="URL of the app to scan"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? "scan-error" : undefined}
-          className="w-full flex-1 rounded-md border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+          className="min-w-0 flex-1 bg-transparent py-3.5 pr-3 font-mono text-[0.9rem] text-ink outline-none focus-visible:outline-none placeholder:text-faint"
         />
         <button
           type="submit"
           disabled={pending || url.trim() === ""}
-          className="rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="label shrink-0 self-stretch bg-ink px-6 text-paper transition-colors hover:bg-flag disabled:bg-rule-firm disabled:text-paper"
         >
-          {pending ? "Starting…" : "Scan for free"}
+          {pending ? "Starting…" : "Scan →"}
         </button>
       </div>
 
@@ -67,13 +69,13 @@ export function ScanForm({
         <p
           id="scan-error"
           role="alert"
-          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+          className="mt-3 border-l-2 border-flag bg-flag-wash px-3 py-2 font-mono text-xs leading-relaxed text-flag"
         >
           {error}
         </p>
       )}
 
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 font-mono text-xs text-mute">
         No signup. Takes about a minute. Only scan apps you own.
       </p>
     </form>

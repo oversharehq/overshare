@@ -5,9 +5,9 @@ export function SeverityChip({ severity }: { severity: Severity }) {
   const style = SEVERITY_STYLES[severity];
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${style.chip}`}
+      className={`label inline-flex shrink-0 items-center gap-2 ${style.text} ${style.weight}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} aria-hidden />
+      <span className={`h-3 w-[3px] ${style.bar}`} aria-hidden />
       {style.label}
     </span>
   );

@@ -63,8 +63,10 @@ Order matters. Lead with 1.
 1. **It doesn't waste your time.** High-confidence detection only. Nothing flagged on entropy —
    minified bundles are full of build hashes that look exactly like secrets. A dedicated test
    asserts zero findings on a benign bundle full of realistic lookalikes.
-2. **It runs on every deploy.** `--fail-on high`, exit code 1, done. Not a one-time scan you
-   forget about the week after you run it.
+2. **It runs on every deploy.** One `uses:` block in a workflow, `--fail-on high`, exit code 1,
+   done. Findings land in your repo's Security tab as code scanning alerts, so GitHub tracks each
+   one as new, still open, or fixed across runs — not a one-time scan you forget about the week
+   after you run it.
 3. **You can read the code.** Every claim is auditable. Reproduce our published results yourself.
 4. **It knows what it can't see.** Passive scanning cannot prove RLS is enforced. The report says
    so explicitly instead of implying the app is clean.
@@ -113,7 +115,16 @@ they're fine. Redirect to the outcome:
 
 **"It's open source — why would I ever pay?"**
 > You wouldn't, for scanning. Scanning is free forever. You'd pay when you want the fix written
-> for your schema, the history showing what regressed, or a badge to hand a customer.
+> for your schema, history that outlives the free 30-day window, or a badge to hand a customer.
+
+**"Do you keep my scan results?"**
+> For 30 days, then they're deleted automatically. Secrets are redacted before anything is stored,
+> and report pages aren't indexed. A stored scan is a list of weaknesses in a live app, so holding
+> them forever would just make our database worth attacking. Want us to keep nothing at all? Run the
+> CLI — it stores nothing and sends us nothing.
+
+Answer this one plainly and volunteer the reasoning. None of the 13 publish a retention policy, so a
+straight number is a cheap trust win — see `00-strategy.md` §3.
 
 **"Won't this be full of false positives?"**
 > That's the failure mode the whole design is built around. Detection is anchored on vendor

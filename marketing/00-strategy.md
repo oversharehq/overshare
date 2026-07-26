@@ -53,7 +53,11 @@ This is not a hedge. It is picked because all three defensible assets above are 
 actually hold, and two of them are **already in the code**:
 
 - `--fail-on` + exit codes `0/1/2` and `--json` → CI-native today. The competition cannot follow
-  without rebuilding as a dev tool.
+  without rebuilding as a dev tool. **As of 2026-07-25 this is a shipped channel, not a plan:**
+  there is a composite `action.yml` and a SARIF 2.1.0 report, so findings land in a repo's Security
+  tab as tracked code scanning alerts. Adoption costs one copied `uses:` block, and GitHub — not us
+  — then tracks each finding as new, open or fixed across runs. That last part is retention
+  infrastructure we got for free, and it is the mechanism behind the §8 metric.
 - "Detection is high-confidence only… nothing is flagged on entropy alone… a scanner that cries
   wolf gets ignored," backed by `test_benign_bundle_produces_no_findings` → the calibration claim
   is enforced by a test, not a marketing sentence.
@@ -117,6 +121,18 @@ Three decisions worth not re-litigating later:
 
 The two monthly tiers are what make the §8 retention metric real. A ladder of one-time depth
 purchases leaves no recurring value and no reason for an app to come back.
+
+**The free/paid line is a time window, decided 2026-07-25: hosted scans are kept 30 days, then
+deleted.** This was made as a security decision — a stored scan is a vulnerability report on a live
+app the submitter often doesn't own, so an unbounded job table is a target list — but it doubles as
+the cleanest upgrade lever we have. 30 days is enough to answer "did my last deploy make this
+worse?", which is what makes the free tier genuinely useful; months of history, cross-run deltas and
+regression alerts are what "Prove it" sells. The boundary is therefore *not* arbitrary and shouldn't
+be tuned for conversion alone — shortening it to force upgrades makes the free tier worse than the
+incumbents' and breaks the wedge, the same trap as paywalling Tier B.
+
+Copy implication: the retention answer is a trust asset, not fine print. Competitors don't publish
+one. Say the number plainly and say why (`04-landing-page.md` FAQ).
 
 ---
 
@@ -192,16 +208,27 @@ Full sub-by-sub map, rules, and templates: `05-community-playbook.md`.
 
 Assumes evenings/weekends and that M1–M4 land roughly on the brief's estimates.
 
+**Progress against this sequence as of 2026-07-25:** the name is resolved and carried through the
+whole codebase, the scanner core is done (27 checks, 211 tests), the API and frontend are built, and
+the GitHub Action and SARIF report are written and CI-green — i.e. most of weeks 1–4 is code
+complete. What is *not* done is everything that makes it public: the trademark search, the domain,
+the PyPI/npm registrations, and flipping `oversharehq/overshare` from private to public with a `v1`
+tag. Calibration (M4) and the RLS check (M2) haven't started. `OVERVIEW.md` §6 is the live status
+board; this section is the plan, not the record.
+
 **Weeks 1–2 — Foundations (no promotion yet)**
-- Resolve the name (`01-naming.md`). Everything below bakes it in; renaming later breaks domains,
-  badge URLs, package names, and backlinks.
+- ~~Resolve the name~~ **done** (`01-naming.md`). Everything below bakes it in; renaming later breaks
+  domains, badge URLs, package names, and backlinks.
 - Rewrite the README as a conversion asset (`03-readme.md`).
 - Publish `SECURITY.md`, `METHODOLOGY.md`, and an acceptable-use policy — see §9.
 - Create the Reddit/HN/GitHub identity. Start reading the target subs daily. **Post nothing
   promotional.** Answer questions only.
 
 **Weeks 3–4 — Credibility before traffic**
-- Ship the GitHub Action.
+- ~~Build the GitHub Action~~ **done** — composite action + SARIF into code scanning. Still to do
+  before anyone can use it: repo public, `v1` tagged, PyPI release cut, and one real end-to-end run
+  in a repo that isn't this one. Also list it in the GitHub Marketplace, which is a distribution
+  channel none of the 13 occupy.
 - Run the calibration set (M4) and *record the numbers* — this is both product work and the
   study's dataset.
 - 20 validation conversations (brief §11) via Discords and comment replies.

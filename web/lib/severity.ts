@@ -4,10 +4,12 @@ import type { Grade, Severity } from "./types";
 // full rather than composed at runtime.
 export interface SeverityStyle {
   label: string;
-  chip: string;
-  dot: string;
-  accent: string;
+  /** Text colour for the mono severity label. */
+  text: string;
+  /** The vertical bar that carries severity in lists and cards. */
   bar: string;
+  /** Weight of the label, so severity survives being read in greyscale. */
+  weight: string;
 }
 
 export const SEVERITY_ORDER: Severity[] = [
@@ -18,50 +20,53 @@ export const SEVERITY_ORDER: Severity[] = [
   "info",
 ];
 
+/**
+ * Severity is encoded as weight plus a rule, in two hues rather than five.
+ *
+ * A five-colour scale trains people to read the palette instead of the finding,
+ * and it makes a medium look like an emergency on a page that is otherwise ink
+ * on paper. Vermilion is reserved for the two severities that should stop a
+ * deploy; medium is ochre; low and info are plain ink at decreasing weight.
+ */
 export const SEVERITY_STYLES: Record<Severity, SeverityStyle> = {
   critical: {
     label: "Critical",
-    chip: "bg-red-50 text-red-700 ring-red-600/20",
-    dot: "bg-red-600",
-    accent: "border-l-red-600",
-    bar: "bg-red-600",
+    text: "text-flag",
+    bar: "bg-flag",
+    weight: "font-semibold",
   },
   high: {
     label: "High",
-    chip: "bg-orange-50 text-orange-700 ring-orange-600/20",
-    dot: "bg-orange-500",
-    accent: "border-l-orange-500",
-    bar: "bg-orange-500",
+    text: "text-flag",
+    bar: "bg-flag/55",
+    weight: "font-medium",
   },
   medium: {
     label: "Medium",
-    chip: "bg-amber-50 text-amber-800 ring-amber-600/20",
-    dot: "bg-amber-500",
-    accent: "border-l-amber-500",
-    bar: "bg-amber-500",
+    text: "text-ochre",
+    bar: "bg-ochre/70",
+    weight: "font-medium",
   },
   low: {
     label: "Low",
-    chip: "bg-sky-50 text-sky-700 ring-sky-600/20",
-    dot: "bg-sky-500",
-    accent: "border-l-sky-500",
-    bar: "bg-sky-500",
+    text: "text-mute",
+    bar: "bg-rule-firm",
+    weight: "font-medium",
   },
   info: {
     label: "Info",
-    chip: "bg-slate-100 text-slate-600 ring-slate-500/20",
-    dot: "bg-slate-400",
-    accent: "border-l-slate-300",
-    bar: "bg-slate-400",
+    text: "text-faint",
+    bar: "bg-rule",
+    weight: "font-normal",
   },
 };
 
-export const GRADE_STYLES: Record<Grade, { ring: string; text: string; bg: string }> = {
-  A: { ring: "ring-emerald-600/30", text: "text-emerald-700", bg: "bg-emerald-50" },
-  B: { ring: "ring-emerald-600/30", text: "text-emerald-700", bg: "bg-emerald-50" },
-  C: { ring: "ring-amber-600/30", text: "text-amber-700", bg: "bg-amber-50" },
-  D: { ring: "ring-orange-600/30", text: "text-orange-700", bg: "bg-orange-50" },
-  F: { ring: "ring-red-600/30", text: "text-red-700", bg: "bg-red-50" },
+export const GRADE_STYLES: Record<Grade, { text: string; rule: string }> = {
+  A: { text: "text-pass", rule: "border-pass/40" },
+  B: { text: "text-pass", rule: "border-pass/40" },
+  C: { text: "text-ochre", rule: "border-ochre/40" },
+  D: { text: "text-ochre", rule: "border-ochre/50" },
+  F: { text: "text-flag", rule: "border-flag/50" },
 };
 
 /** Headline shown beside the score. Leads with consequence, not alarm. */

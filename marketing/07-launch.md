@@ -13,15 +13,27 @@ broken link, is the most expensive mistake available here.
 
 **Blocking — no launch without every one of these:**
 
-- [ ] Name resolved and verified (`01-naming.md` §4 — including trademark)
+- [x] Name resolved, and carried through the entire codebase (`01-naming.md`)
+- [ ] **Trademark search cleared** — IP Australia + USPTO TESS, classes 9 and 42, `Oversecured`
+      hardest. Split out from the name decision because it is the one item that can still force a
+      rename, and the repo is deliberately private until it clears
 - [ ] `pip install overshare` works from a clean machine. Test on a machine that isn't yours
+- [ ] **Repo flipped public and `v1` tagged.** `oversharehq/overshare` exists but is private, so
+      every "View on GitHub" CTA 404s and the README's `uses: oversharehq/overshare@v1` cannot
+      resolve. Deleting an unseen private repo is free; un-publishing an indexed public one is not
 - [ ] README rewritten (`03-readme.md`)
 - [ ] **`METHODOLOGY.md` exists and is real.** README and landing page both link to it. It is the
       single link a skeptical reader clicks. It cannot 404
 - [ ] `LICENSE` (Apache-2.0), `SECURITY.md`, `ACCEPTABLE_USE.md`, `CONTRIBUTING.md`
 - [ ] Tier B consent gate + conservative default rate limits + no bulk/target-list input
       (`00-strategy.md` §9 — this is what stops your tool becoming someone else's mass scanner)
-- [ ] GitHub Action published and tested in a real repo
+- [ ] GitHub Action published and tested in a real repo. CI now invokes `action.yml` itself via
+      `uses: ./`, so the install-from-`$GITHUB_ACTION_PATH`, input plumbing, exit-code capture and
+      SARIF output are covered. **Two things it still cannot cover from a private repo:** the
+      upload-to-code-scanning step, and the fail-on gate that runs after it. Verify both in a public
+      repo — a malformed SARIF is silently ignored by GitHub and looks identical to a clean scan, so
+      confirm alerts actually appear in the Security tab rather than trusting a green check.
+      "Published" additionally means public + `v1` tagged + listed in the GitHub Marketplace
 - [ ] Landing page live, scan box working, no placeholder text, no fake statistics
 - [ ] Scan endpoint survives an HN front-page spike — rate limits, queue depth, a graceful
       "we're swamped, here's the CLI" fallback
@@ -34,7 +46,11 @@ broken link, is the most expensive mistake available here.
       you compare, and "I haven't tried them" is a bad answer
 - [ ] 20 validation conversations done
 - [ ] Someone else has run the tool and read the README cold
-- [ ] Privacy policy + scan-retention answer decided (brief §12)
+- [x] Scan-retention answer decided — 30 days, swept hourly, and it ships in code. The reasoning and
+      the public wording are in `00-strategy.md` §3 and `04-landing-page.md`'s FAQ
+- [ ] Privacy policy written, consistent with that 30-day answer
+- [ ] Someone has looked at the rendered landing page in a browser. It builds, type-checks and
+      serves correct HTML, but the visual result is still unconfirmed (`OVERVIEW.md` §6)
 
 ---
 
@@ -67,6 +83,11 @@ No superlatives, no "revolutionary," no emoji. HN titles that sell get flagged.
 > It also won't claim your app is clean when it can't know — passive scanning can't verify RLS is
 > enforced, so the report says so rather than showing a green check.
 >
+> The other thing that makes it different from the paste-a-URL tools: it's built to run on every
+> deploy, not once. There's a GitHub Action that writes SARIF, so findings land in your repo's
+> Security tab and GitHub tracks each one as new, still open, or fixed across runs. A scan you run
+> once is a scan you stop running.
+>
 > On legality, since it'll come up: passive checks fetch only what the server already sends every
 > visitor. No writes, no logins, no enumeration, no credential that wasn't already public. The
 > fetcher resolves the host, rejects any non-public address, and connects to the pinned IP to close
@@ -81,6 +102,11 @@ No superlatives, no "revolutionary," no emoji. HN titles that sell get flagged.
 **Why this comment works:** leads with a tradeoff rather than features, pre-answers the legality
 question that would otherwise dominate the thread, demonstrates real expertise through the
 anon-vs-service_role distinction, and explicitly invites attack. HN rewards all four.
+
+One likely follow-up: *why are the alerts repo-level instead of inline on the diff?* Because SARIF
+findings locate against the scanned URL, not a file and line in the repo. That's inherent to
+scanning a deployed app rather than source code — say so plainly; it reads as understanding the
+tradeoff, whereas hedging reads as a bug you haven't noticed.
 
 **Rules:** never ask anyone to upvote. Reply to every comment, especially hostile ones. If someone
 finds a false positive, thank them, fix it, and link the commit in-thread — that exchange is worth

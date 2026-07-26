@@ -9,6 +9,13 @@ Act**, unauthorised access to a computer system is the offence. Good intent is
 not a defence. This applies to you when you run the CLI, and to us when we run
 a scan you submitted.
 
+> **Also published at `/acceptable-use`.** The website cannot read this file at
+> build time, so the page restates it. Headings, the scan tiers and the
+> retention window live once in `web/lib/docs.ts`, and
+> `tests/test_docs_sync.py` fails CI if this file, that file and the API's
+> `OVERSHARE_RETENTION_DAYS` default stop agreeing. Change the retention
+> promise here and the Python suite goes red until the code matches.
+
 ---
 
 ## The short version

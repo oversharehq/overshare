@@ -1,4 +1,5 @@
 import type { ScanResult } from "@/lib/types";
+import { Block } from "./Paper";
 
 /**
  * Overshare reports only what it can prove, which means it under-reports by
@@ -16,16 +17,14 @@ export function ScopeNotice({ result }: { result: ScanResult }) {
   ];
 
   return (
-    <section className="mt-8 space-y-4">
+    <>
       {result.errors.length > 0 && (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-4">
-          <h2 className="text-sm font-semibold text-amber-900">
-            Some checks did not complete
-          </h2>
-          <p className="mt-1 text-sm text-amber-900">
+        <div className="mt-8 border-l-2 border-ochre bg-ochre-wash px-4 py-3">
+          <p className="label text-ochre">Some checks did not complete</p>
+          <p className="mt-1.5 text-[0.95rem] leading-[1.6] text-ochre">
             These did not run, so treat them as unknown rather than passed.
           </p>
-          <ul className="mt-2 list-inside list-disc space-y-1 font-mono text-xs text-amber-900">
+          <ul className="mt-2 space-y-1 font-mono text-xs text-ochre">
             {result.errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
@@ -33,36 +32,40 @@ export function ScopeNotice({ result }: { result: ScanResult }) {
         </div>
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">
-          What this scan did not cover
-        </h2>
-        <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+      <Block index="04" title="What this scan did not cover">
+        <ul className="max-w-[34rem] border-t border-rule">
           {notChecked.map((item) => (
-            <li key={item} className="flex gap-2">
-              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-300" aria-hidden />
-              {item}
+            <li
+              key={item}
+              className="flex gap-3 border-b border-rule py-2.5 text-[0.95rem] leading-[1.5] text-ink-soft"
+            >
+              <span className="label shrink-0 pt-1 text-faint">not checked</span>
+              <span>{item}</span>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-4 max-w-[34rem] text-[0.95rem] leading-[1.6] text-mute">
           A clean result here means nothing dangerous is exposed on the public
           surface. It is not a statement about the app as a whole.
         </p>
 
-        <details className="mt-4 border-t border-slate-100 pt-3">
-          <summary className="cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
+        <details className="group mt-6">
+          <summary className="label flex cursor-pointer list-none items-center gap-2 text-mute transition-colors hover:text-flag [&::-webkit-details-marker]:hidden">
+            <span className="text-faint">
+              <span className="group-open:hidden">+</span>
+              <span className="hidden group-open:inline">&minus;</span>
+            </span>
             {result.assets_scanned.length} resources fetched
           </summary>
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-3 space-y-1 border-l border-rule pl-4">
             {result.assets_scanned.map((asset) => (
-              <li key={asset} className="break-all font-mono text-xs text-slate-500">
+              <li key={asset} className="break-all font-mono text-xs text-mute">
                 {asset}
               </li>
             ))}
           </ul>
         </details>
-      </div>
-    </section>
+      </Block>
+    </>
   );
 }

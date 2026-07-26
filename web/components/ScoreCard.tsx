@@ -1,49 +1,74 @@
-import { GRADE_STYLES, SEVERITY_ORDER, SEVERITY_STYLES, gradeSummary } from "@/lib/severity";
+import {
+  GRADE_STYLES,
+  SEVERITY_ORDER,
+  SEVERITY_STYLES,
+  gradeSummary,
+} from "@/lib/severity";
 import type { ScanResult } from "@/lib/types";
 
 export function ScoreCard({ result }: { result: ScanResult }) {
   const grade = GRADE_STYLES[result.grade];
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+    <section>
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         <div
-          className={`grid h-24 w-24 shrink-0 place-items-center rounded-lg ring-1 ring-inset ${grade.bg} ${grade.ring}`}
+          className={`grid h-28 w-24 shrink-0 place-items-center border ${grade.rule}`}
         >
-          <span className={`text-5xl font-bold leading-none ${grade.text}`}>
+          <span
+            className={`text-[4.5rem] leading-none font-medium ${grade.text}`}
+          >
             {result.grade}
           </span>
         </div>
 
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-slate-900">
-              {result.score}
-            </span>
-            <span className="text-sm text-slate-500">out of 100</span>
+        <div className="min-w-0 flex-1">
+          <p className="label text-faint">Score</p>
+          <p className="mt-1.5 font-mono text-2xl tabular-nums text-ink">
+            {result.score}
+            <span className="text-faint"> / 100</span>
+          </p>
+
+          {/* A scale rather than a progress bar: the tick marks where this app
+              landed on a range, which is what a score actually is. */}
+          <div className="relative mt-3 h-3 max-w-xs border-l border-r border-rule-firm">
+            <div className="absolute top-1/2 h-px w-full bg-rule" />
+            <div
+              className="absolute top-0 h-3 w-[2px] bg-flag"
+              style={{ left: `calc(${result.score}% - 1px)` }}
+            />
           </div>
-          <p className="mt-1 text-base text-slate-700">
+
+          <p className="mt-4 max-w-lg text-[1.05rem] leading-[1.55] text-ink">
             {gradeSummary(result.grade, result.counts)}
           </p>
         </div>
       </div>
 
-      <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 sm:grid-cols-5">
+      <dl className="mt-8 grid grid-cols-2 border-t border-rule sm:grid-cols-5">
         {SEVERITY_ORDER.map((severity) => {
           const count = result.counts[severity];
           const style = SEVERITY_STYLES[severity];
+          const present = count > 0;
           return (
-            <div key={severity} className="bg-white px-3 py-3 text-center">
-              <dt className="flex items-center justify-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+            <div
+              key={severity}
+              className="flex items-baseline gap-2.5 border-b border-rule py-3 sm:block sm:border-b-0 sm:border-r sm:px-3 sm:last:border-r-0 sm:first:pl-0"
+            >
+              <dt
+                className={`label flex items-center gap-2 ${
+                  present ? style.text : "text-faint"
+                }`}
+              >
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${count > 0 ? style.dot : "bg-slate-300"}`}
+                  className={`h-2.5 w-[3px] ${present ? style.bar : "bg-rule"}`}
                   aria-hidden
                 />
                 {style.label}
               </dt>
               <dd
-                className={`mt-1 text-xl font-semibold tabular-nums ${
-                  count > 0 ? "text-slate-900" : "text-slate-300"
+                className={`font-mono text-xl tabular-nums sm:mt-2 ${
+                  present ? "text-ink" : "text-faint"
                 }`}
               >
                 {count}

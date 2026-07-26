@@ -10,9 +10,10 @@ belongs in `CONTRIBUTING.md`.
 What's preserved from the current version: the calibration paragraph, the SSRF design note, the
 RLS-gap honesty, and the known limitations. Those are the credibility.
 
-The package must actually be renamed to `overshare` first — the codebase still carries the old
-name (`01-naming.md` §7). Do not publish until the acceptable-use policy and `SECURITY.md` exist
-(`00-strategy.md` §9), or before the trademark search clears.
+The code rename is done (`01-naming.md` §7), and the repo is pushed to `oversharehq/overshare` —
+**private**, deliberately, until the trademark search clears. Before this draft can replace the
+root README: the repo goes public, `v1` is tagged (the CI snippet below references it), the PyPI
+release is cut, and the acceptable-use policy and `SECURITY.md` exist (`00-strategy.md` §9).
 
 ---
 
@@ -62,16 +63,43 @@ The point of this tool. A scan you run once is a scan you stop running.
 ```yaml
 # .github/workflows/security.yml
 name: security
-on: [push]
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1'   # catches drift you didn't deploy: expiring certs, DNS
+                          # changes, a provider default that moved
+
+permissions:
+  contents: read
+  security-events: write  # required to publish to the Security tab
+
 jobs:
-  scan:
+  overshare:
     runs-on: ubuntu-latest
     steps:
-      - run: pip install overshare
-      - run: overshare https://myapp.com --fail-on high
+      - uses: oversharehq/overshare@v1
+        with:
+          url: https://myapp.com
+          fail-on: high
 ```
 
-Exit codes: `0` clean · `1` findings at or above `--fail-on` · `2` scan error.
+Findings land in your repository's **Security** tab as code scanning alerts, and GitHub tracks each
+one as new, still open, or fixed across runs. The report uploads *before* the job fails, so you
+still get the findings on the run that breaks the build.
+
+| Input | Default | Effect |
+|---|---|---|
+| `url` | *required* | The deployed app to scan |
+| `fail-on` | `high` | Lowest severity that fails the job (`never` to report only) |
+| `sarif-file` | `overshare.sarif` | Where the SARIF report is written |
+| `upload-sarif` | `true` | Publish to code scanning. Set `false` on forks, or private repos without Advanced Security |
+| `timeout` | `10` | Per-request timeout, seconds |
+| `no-footprint` | `false` | Skip DNS, mail auth and certificate transparency |
+
+Prefer to run it yourself? `pip install overshare && overshare https://myapp.com --fail-on high`
+works the same in any CI. Exit codes: `0` clean · `1` findings at or above `--fail-on` · `2` scan
+error — a scan that couldn't run fails loudly instead of reporting a falsely clean result.
 
 ## What it checks
 
@@ -165,6 +193,7 @@ before you trust it on anything real.
 |---|---|
 | `--json` | Machine-readable output |
 | `--output FILE` | Write to a file instead of stdout |
+| `--sarif-file FILE` | Write a SARIF 2.1.0 report, for GitHub code scanning or any SARIF viewer |
 | `--fail-on LEVEL` | Severity that exits 1: `critical`/`high`/`medium`/`low`/`never` |
 | `--show-info` | Include informational findings (platform, DNS, anon key) |
 | `--no-footprint` | Skip DNS, mail auth, certificate transparency |
@@ -197,6 +226,12 @@ Apache-2.0
 
 - **Badge in the header must be real or absent.** A fake "passing" badge on a security tool is
   self-immolating.
+- **The CI snippet is a broken promise until `v1` is tagged in a public repo.** `uses:
+  oversharehq/overshare@v1` is the single most copied line in this README, and it fails with an
+  unhelpful resolution error while the repo is private. Tag before you publish, not after.
+- **Say that SARIF locates against the scanned URL, not repo files** if anyone asks why alerts are
+  repo-level rather than inline PR annotations. That's inherent to scanning a deployed app, and
+  explaining it pre-empts a bug report.
 - **`METHODOLOGY.md` must exist before launch.** The README links to it and it's the entire
   calibration claim. It cannot 404 — that's the one link HN will click.
 - **Move testing detail** from the current README into `CONTRIBUTING.md` verbatim. It's good

@@ -23,11 +23,11 @@ export function CommandBlock({
   }
 
   return (
-    <div className="relative rounded-md border border-slate-800 bg-slate-900 p-4">
-      <pre className="overflow-x-auto font-mono text-sm leading-relaxed text-slate-100">
+    <div className="group/cmd relative bg-plate p-4 pr-16">
+      <pre className="overflow-x-auto font-mono text-[0.8rem] leading-[1.8] text-paper">
         {lines.map((line) => (
           <div key={line}>
-            <span className="select-none text-slate-500">$ </span>
+            <span className="mr-1.5 select-none text-flag">$</span>
             {line}
           </div>
         ))}
@@ -35,7 +35,7 @@ export function CommandBlock({
       <button
         type="button"
         onClick={copy}
-        className="absolute right-2 top-2 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-700"
+        className="label absolute top-3 right-3 border border-mute/60 px-2 py-1 text-faint transition-colors hover:border-paper hover:text-paper"
       >
         {copied ? "Copied" : label}
       </button>

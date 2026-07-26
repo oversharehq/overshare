@@ -151,13 +151,24 @@ Next.js 16 (App Router), TypeScript, Tailwind.
 | Route | What it is |
 |---|---|
 | `/` | Landing page. Scan box and `pip install` side by side. |
+| `/methodology` | How detection decides, the severity table, the blind spots, and the deliberately unmeasured false-positive rate. |
+| `/acceptable-use` | Scan tiers and what each requires, prohibited uses, retention. |
 | `/p/[platform]` | Statically generated SEO pages — Lovable, Bolt, v0, Replit, Base44, Cursor. |
 | `/scan/[id]` | Live report. Polls the API, renders findings. `noindex`. |
 | `/api/v1/[...path]` | Server-side proxy to the API. |
 
 Content lives in data files rather than being scattered through components: `lib/platforms.ts`
 holds the SEO page copy, `lib/brand.ts` holds the product name, `lib/severity.ts` holds severity
-styling.
+styling, and `lib/docs.ts` holds the headings and numbers the two policy pages share with the
+root markdown.
+
+**The look is deliberate and it is an argument.** The interface is styled as a technical document,
+not a dashboard: warm paper ground, Newsreader serif for prose, IBM Plex Mono for every label and
+datum, hairline rules instead of cards, numbered sections, notes floated into the right margin,
+and captioned figures. The reasoning is in §4. Design tokens are the `@theme` block in
+`app/globals.css`; the layout primitives — `Shell`, `Section`, `Block`, `Note`, `Figure`, `Prose`,
+`Code` — are in `components/Paper.tsx`. Build on those rather than reaching for Tailwind's stock
+palette. There should be no `slate-*`, `rounded-*` or `shadow-*` anywhere in `web/`.
 
 ### 3.4 Strategy — `marketing/`
 
@@ -191,6 +202,34 @@ image is built. Don't reintroduce that.
 for frontend work without running Python. But a security scanner that quietly returns fabricated
 clean results is worse than one that's down, so `lib/mock/guard.ts` returns 503 in a production
 build unless explicitly overridden, and a banner marks mock data everywhere else.
+
+**The frontend is styled as a technical document, and that's positioning rather than taste.** The
+only uncontested differentiator is published calibration and stated limits, so the site should look
+like something measured and written down — hence paper, serif prose, mono data, hairline rules,
+numbered sections, margin notes, captioned figures. Two alternatives were considered and rejected:
+all-mono terminal brutalism, and a dark instrument panel with phosphor accents, the latter partly
+because it drifts toward the hacker theatre `marketing/02-messaging.md` §5 forbids. The starting
+point was stock Tailwind — slate ground, rounded cards, `shadow-sm` — which reads as generic
+AI-generated UI and undercuts the argument.
+
+Two consequences worth knowing before you touch CSS. Severity is encoded as **weight plus a rule in
+two hues** — vermilion for critical and high, ochre for medium, plain ink for low and info — not as
+a five-colour pill scale, because a five-colour scale trains people to read the palette instead of
+the finding. And anything global in `globals.css` must live inside `@layer base`: unlayered CSS
+outranks Tailwind v4's layered utilities regardless of specificity, so a bare `:focus-visible` rule
+silently beats `outline-none` at every call site.
+
+**The two policy pages restate root markdown, and a test stops them drifting.** `/methodology` and
+`/acceptable-use` cover the same ground as `METHODOLOGY.md` and `ACCEPTABLE_USE.md`, but the web
+image builds from `web/` alone (`docker-compose.yml` sets `context: ./web`) so the pages *cannot*
+read those files at build time. Prose is therefore written twice on purpose; every heading and every
+load-bearing number is written once, in `web/lib/docs.ts`.
+
+`tests/test_docs_sync.py` treats the scanner as canonical and fails CI if the markdown or the
+website disagrees with it on section headings, severity penalties, grade thresholds, or the
+retention window. It also fails if a percentage ever appears in the false-positive section before
+the calibration run. That test is the reason the duplication is safe — don't delete it and leave
+the copies.
 
 **Scans expire after 30 days, and `0` means "keep everything".** A stored scan is a vulnerability
 report on a live app, often one the submitter doesn't own, so an unbounded job table is a target
@@ -291,11 +330,17 @@ reachable from the internet.
 ### Tests
 
 ```bash
-pytest            # 221 tests
+pytest            # 231 tests
 # Build first: PageProps and RouteContext are generated into web/.next/types,
 # so type checking a clean checkout before building fails on missing globals.
 cd web && npm run build && npx tsc --noEmit && npx eslint .
 ```
+
+`tests/test_docs_sync.py` is the odd one out: it reads `METHODOLOGY.md`, `ACCEPTABLE_USE.md` and
+`web/lib/docs.ts`, and fails if the published severity penalties, grade thresholds or retention
+window disagree with the scanner. It runs inside the normal `pytest` job, so there is no separate
+CI step to remember — but it does mean **editing those markdown files can break the Python suite**,
+which is surprising the first time it happens.
 
 ---
 
@@ -303,7 +348,7 @@ cd web && npm run build && npx tsc --noEmit && npx eslint .
 
 | Milestone | State |
 |---|---|
-| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 221 tests. |
+| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 231 tests. |
 | **M2 — RLS check (Tier B)** | Not started. Reports currently say RLS was *not* tested. |
 | **M3 — deploy + UI** | Built, not deployed. API, frontend, Docker and compose all work end to end locally. |
 | **CI channel** | Action and SARIF done. Usable only once the repo is public and `v1` is tagged. |
@@ -326,8 +371,15 @@ bundled vulnerable app. SSRF rejection, rate limiting, the production mock guard
 taxonomy have all been tested over HTTP. Process-isolated workers were verified end to end through
 the live API, and the SARIF output validates against the official 2.1.0 schema.
 
-**Not verified:** nobody has looked at the rendered UI in a browser. It builds, type-checks, lints
-and serves correct HTML, but the visual result is unconfirmed. Nothing has ever been deployed, so
+**The UI has now been looked at.** On 2026-07-25 the frontend was redesigned onto the document
+treatment described in §3.3 and §4, and every surface was rendered in a real browser: landing page,
+both policy pages, a platform page, a live scan report from the fixture backend, and the report
+again under print emulation. Checked at 1280px and at 390px with a scripted probe asserting zero
+elements overflow the viewport, which caught a genuine mobile overflow (the hero grid sizing to the
+command block's `min-content`). The print path was verified to hide the site chrome and to expand
+every collapsed finding, so a printed report cannot silently omit one.
+
+**Not verified:** Safari and Firefox — everything above was Chrome. Nothing has ever been deployed, so
 `DEPLOY.md` is written from the configs rather than from a deploy that happened — expect to correct
 it on the first run. The Action's SARIF *upload* step is also unexercised: this repo is private and
 has no Advanced Security, so the upload API is unavailable until it goes public.
@@ -364,17 +416,18 @@ you".
 TODO markers are visible on the landing page. They're written so the surrounding sentence stays
 true if the marker is deleted — no invented statistics — but they must not ship:
 
-- No measured false-positive rate (needs M4). `METHODOLOGY.md` now exists and documents the method
-  and the blind spots, with the rate itself explicitly unmeasured.
-- No page for the acceptable use policy. `ACCEPTABLE_USE.md` exists in the repo, but there's no
-  route for it in `web/` and linking to the repo 404s while it's private.
+- No measured false-positive rate (needs M4). `METHODOLOGY.md` and `/methodology` both document the
+  method and the blind spots with the rate itself explicitly unmeasured, and
+  `tests/test_docs_sync.py` fails if a percentage appears there before the calibration run. The one
+  remaining marker on the landing page guards exactly this.
 - No working email capture for the hosted waitlist.
-- **The retention FAQ answer needs re-applying.** It was written (30 days, plus the honest note
-  that anyone can submit any URL) and then lost when a concurrent session rewrote
-  `web/app/page.tsx`. The wording survives in `ACCEPTABLE_USE.md` §"What we do with scans", so this
-  is a copy-paste, not a rewrite.
 - `marketing/03-readme.md` and `04-landing-page.md` still show a raw `pip install` in a workflow
   rather than the Action.
+
+Resolved on 2026-07-25: the acceptable use policy now has a route (`/acceptable-use`, linked from
+the landing page and the footer), the methodology CTA points at `/methodology` instead of nowhere,
+and the retention FAQ carries the real 30-day answer. Three of the five markers are gone; the two
+above are the ones left.
 
 Also: `marketing/00-strategy.md §1` competitive claims come from vendor self-description and
 vendor-authored roundups. They haven't been independently checked.
@@ -446,7 +499,18 @@ the slowest item on this list and the one everything else is marketing for.
 - **Never run a blanket find-replace over `marketing/`.** One was run during the rename and
   corrupted `01-naming.md`, inverting the section explaining the *rejected* name.
 - **Never publish a false-positive rate that hasn't been measured.** The empty section in
-  `METHODOLOGY.md` is the point of the document, not an oversight.
+  `METHODOLOGY.md` is the point of the document, not an oversight, and `tests/test_docs_sync.py`
+  will fail if a percentage appears there.
+- **Never change a penalty, grade threshold or the retention default in one place only.** Each of
+  those numbers is stated in the scanner, in a root markdown doc, and on the website.
+  `tests/test_docs_sync.py` treats the scanner as canonical and fails on the rest; fix the copies
+  rather than the test.
+- **Never put a bare element or pseudo-class rule in `globals.css` outside `@layer base`.**
+  Unlayered CSS beats Tailwind v4's layered utilities at any specificity, so the utility you write
+  at the call site silently loses. This already cost a debugging session over a stray focus ring.
+- **Never reintroduce stock Tailwind styling in `web/`.** No `slate-*`, no `rounded-*`, no
+  `shadow-*`. Use the tokens in `globals.css` and the primitives in `components/Paper.tsx`; the
+  reasoning is in §4 and it is a positioning decision, not a preference.
 - **Check `ls -lt` before editing `web/` or `marketing/`.** Sessions run concurrently here. On
   2026-07-25 an uncommitted edit to `web/app/page.tsx` was silently overwritten when another
   session rewrote the file. If you must touch a shared file, commit it immediately and verify it

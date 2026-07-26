@@ -7,6 +7,14 @@ This document exists because a scanner's check count tells you nothing. Any
 tool can claim 150 checks. The question that matters is how often it is wrong,
 and in which direction.
 
+> **Also published at `/methodology`.** The website cannot read this file at
+> build time — the web image builds from `web/` alone — so the page restates it.
+> Section headings, severity penalties and grade thresholds live once in
+> `web/lib/docs.ts`, and `tests/test_docs_sync.py` fails CI if this file, that
+> file and the scanner stop agreeing. Rename a `##` heading here and the Python
+> suite goes red until `web/lib/docs.ts` and
+> `web/app/methodology/page.tsx` follow.
+
 ---
 
 ## The one rule

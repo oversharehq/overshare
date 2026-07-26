@@ -132,6 +132,12 @@ The two that matter most:
   guard. It feeds in real-world build hashes, SRI hashes, minified identifiers,
   UUIDs, and a Stripe *publishable* key, and asserts **zero** findings. When you
   add a pattern, add its benign lookalike here too.
+- `test_docs_sync.py` — the claims guard. The severity penalties, grade
+  thresholds and retention window are stated in three places: this scanner,
+  the markdown docs, and the website. It treats the scanner as canonical and
+  fails if the others disagree, so **editing `METHODOLOGY.md` or
+  `ACCEPTABLE_USE.md` can turn the Python suite red.** It also fails if a
+  percentage appears in the false-positive section before it has been measured.
 
 ### 2. End-to-end against a local vulnerable app
 
@@ -228,6 +234,7 @@ false-positive rate.
 | [SECURITY.md](SECURITY.md) | Reporting a vulnerability in Overshare itself |
 | [DEPLOY.md](DEPLOY.md) | Running the hosted stack |
 | [OVERVIEW.md](OVERVIEW.md) | How the scanner, API, frontend and strategy fit together |
+| [web/README.md](web/README.md) | Working on the frontend: the design system, the fixture backend, and how to check a change in a browser |
 
 **Only scan applications you own or have written permission to test.** Good
 intent is not a defence under the Australian Criminal Code Act or the US CFAA.

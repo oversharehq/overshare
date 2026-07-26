@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CommandBlock } from "@/components/CommandBlock";
+import { Code, Figure, Note, Prose, Section, Shell } from "@/components/Paper";
 import { ScanForm } from "@/components/ScanForm";
 import { Todo } from "@/components/Todo";
 import { BRAND, GITHUB_URL } from "@/lib/brand";
@@ -25,14 +26,17 @@ const TERMINAL_OUTPUT = `${BRAND.name} report: http://localhost:8000/
 
 const FINDS = [
   {
+    index: "i",
     title: "Secrets in your shipped JavaScript",
     body: "Supabase service_role keys that bypass RLS entirely, Stripe live keys, AWS credentials, OpenAI and Anthropic tokens, database URIs with passwords. Plus public source maps and readable /.env and /.git paths.",
   },
   {
+    index: "ii",
     title: "Misconfiguration",
     body: "Missing or weakened CSP, absent HSTS, clickjacking exposure, cookies without Secure or HttpOnly, CORS that reflects any origin with credentials, outdated TLS, expiring certificates.",
   },
   {
+    index: "iii",
     title: "Forgotten infrastructure",
     body: "Certificate transparency logs mined for the staging and admin subdomains you shipped once and forgot. Plus SPF, DKIM and DMARC gaps that let anyone send mail as your domain.",
   },
@@ -71,8 +75,7 @@ const FAQ = [
         No — it is public by design, and any scanner that flags it as a leak is
         wrong. It only matters if RLS is not enforced behind it, which is a
         separate check. The key that must never reach a browser is{" "}
-        <code className="font-mono text-sm">service_role</code>, because it
-        bypasses RLS entirely.
+        <Code>service_role</Code>, because it bypasses RLS entirely.
       </>
     ),
   },
@@ -80,11 +83,18 @@ const FAQ = [
     q: "Will you store my scan results?",
     a: (
       <>
-        <Todo>
-          Blocked on the retention decision in build brief §12. The API stores
-          every scan in SQLite today, including scans of apps the submitter may
-          not own. This question must be answered honestly before launch.
-        </Todo>
+        <p>
+          For 30 days, then they are deleted automatically. That applies to
+          every scan, including one somebody else ran against your app — anyone
+          can paste any URL into the box above, and we would rather say so than
+          let you assume otherwise.
+        </p>
+        <p className="mt-3">
+          Secrets are redacted before anything is written down, so what is kept
+          is a report, not a set of working keys. We do not contact the owners
+          of scanned apps, and we do not sell scan data. If you want a result
+          gone sooner than 30 days, ask and it will be.
+        </p>
       </>
     ),
   },
@@ -101,101 +111,147 @@ const FAQ = [
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-5xl px-6">
-      {/* Hero */}
-      <section className="py-16 sm:py-20">
-        {/* Tagline fixed in marketing/01-naming.md §1. The "on every deploy"
-            half is load-bearing: it carries the continuous/CI position that the
-            04-landing-page.md H1 left to the subheading. */}
-        <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Find out what your app shows the public — on every deploy.
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg text-slate-600">
-          Open-source security scanner for AI-built web apps. Paste a URL, or run
-          it in CI on every deploy. High-confidence detection only — it will not
-          waste your time.
-        </p>
+    <div>
+      {/* Hero. Large serif at a narrow measure: the tagline is the one thing on
+          the page that should read as a statement rather than documentation. */}
+      <section className="pt-14 pb-16 sm:pt-20 sm:pb-20">
+        <Shell>
+          {/* Tagline fixed in marketing/01-naming.md §1. The "on every deploy"
+              half is load-bearing: it carries the continuous/CI position that
+              the 04-landing-page.md H1 left to the subheading. */}
+          <h1 className="max-w-[46rem] text-[2.6rem] leading-[1.05] font-medium tracking-[-0.02em] text-balance sm:text-[3.9rem]">
+            Find out what your app shows the public
+            <span className="text-flag"> — on every deploy.</span>
+          </h1>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-2">
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Scan a URL
-            </p>
-            <ScanForm autoFocus />
-          </div>
+          <p className="mt-7 max-w-[35rem] text-[1.15rem] leading-[1.6] text-ink-soft">
+            Open-source security scanner for AI-built web apps. Paste a URL, or
+            run it in CI on every deploy. High-confidence detection only — it
+            will not waste your time.
+          </p>
 
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Or run it locally
-            </p>
-            <CommandBlock
-              lines={[
-                `pip install ${BRAND.cmd}`,
-                `${BRAND.cmd} https://myapp.com --fail-on high`,
-              ]}
-            />
-            <a
-              href={GITHUB_URL}
-              className="mt-3 inline-block text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-900"
-            >
-              View on GitHub →
-            </a>
-            <div className="mt-2">
-              <Todo>
-                Repo is not published, so this link 404s. Also gates the PyPI
-                install above.
-              </Todo>
+          <div className="mt-12 grid gap-10 lg:grid-cols-2 lg:gap-14">
+            {/* min-w-0 on both tracks: without it the grid sizes to the command
+                block's min-content and the whole page overflows on mobile. */}
+            <div className="min-w-0">
+              <p className="label mb-3 text-faint">Scan a URL</p>
+              <ScanForm autoFocus />
+            </div>
+
+            <div className="min-w-0">
+              <p className="label mb-3 text-faint">Or run it locally</p>
+              <CommandBlock
+                lines={[
+                  `pip install ${BRAND.cmd}`,
+                  `${BRAND.cmd} https://myapp.com --fail-on high`,
+                ]}
+              />
+              <a
+                href={GITHUB_URL}
+                className="mt-3 inline-block font-mono text-xs text-ink underline decoration-rule-firm underline-offset-4 transition-colors hover:text-flag"
+              >
+                View on GitHub ↗
+              </a>
+              <div className="mt-2">
+                <Todo>
+                  Repo is not published, so this link 404s. Also gates the PyPI
+                  install above.
+                </Todo>
+              </div>
             </div>
           </div>
-        </div>
 
-        <p className="mt-10 text-sm text-slate-500">
-          {BRAND.license} · No account required · Passive by default · Never
-          scans apps you do not own
-        </p>
+          {/* Trust strip: text only, and every claim here is checkable. */}
+          <ul className="mt-14 flex flex-wrap gap-x-6 gap-y-2 border-t border-rule pt-4 font-mono text-xs text-mute">
+            <li>{BRAND.license}</li>
+            <li>No account required</li>
+            <li>Passive by default</li>
+            <li>Never scans apps you do not own</li>
+          </ul>
+        </Shell>
       </section>
 
-      {/* Real output */}
-      <section className="border-t border-slate-200 py-14">
-        <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
-          <div className="border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400">
-            $ {BRAND.cmd} http://localhost:8000 --no-footprint
-          </div>
-          <pre className="overflow-x-auto px-4 py-4 font-mono text-xs leading-relaxed text-slate-200">
-            {TERMINAL_OUTPUT}
-          </pre>
-        </div>
-        <p className="mt-3 text-sm text-slate-500">
-          Actual output, scanning the deliberately vulnerable test app included
-          in the repo. You can reproduce it before trusting this on anything
-          real.
-        </p>
+      {/* Real output, presented as a plate in a paper rather than a hero
+          screenshot. */}
+      <section className="border-t border-rule py-14">
+        <Shell>
+          <Figure
+            index="1"
+            caption="Actual output, scanning the deliberately vulnerable test app included in the repo. You can reproduce it before trusting this on anything real."
+          >
+            <div className="bg-plate">
+              <div className="flex gap-2 border-b border-mute/25 px-4 py-2.5 font-mono text-xs text-faint">
+                <span className="text-flag">$</span>
+                {BRAND.cmd} http://localhost:8000 --no-footprint
+              </div>
+              <pre className="overflow-x-auto px-4 py-4 font-mono text-xs leading-[1.75] text-paper">
+                {TERMINAL_OUTPUT}
+              </pre>
+            </div>
+          </Figure>
+        </Shell>
       </section>
 
-      {/* What it finds */}
-      <section id="checks" className="scroll-mt-6 border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          What it finds
-        </h2>
-        <div className="mt-8 grid gap-8 sm:grid-cols-3">
+      <Section index="01" id="checks" title="What it finds">
+        <div className="max-w-[36rem] divide-y divide-rule border-t border-rule">
           {FINDS.map((group) => (
-            <div key={group.title}>
-              <h3 className="text-sm font-semibold text-slate-900">
-                {group.title}
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">{group.body}</p>
+            <div
+              key={group.title}
+              className="py-5 sm:grid sm:grid-cols-[2.5rem_1fr]"
+            >
+              <p className="label pt-1.5 text-faint">{group.index}</p>
+              <div>
+                <h3 className="text-[1.05rem] font-medium text-ink">
+                  {group.title}
+                </h3>
+                <p className="mt-1.5 text-[0.95rem] leading-[1.65] text-ink-soft">
+                  {group.body}
+                </p>
+              </div>
             </div>
           ))}
         </div>
-      </section>
+      </Section>
 
-      {/* Differentiator */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="max-w-3xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Every other scanner tells you how many checks it runs. We tell you how
-          often we are wrong.
-        </h2>
-        <div className="mt-6 max-w-2xl space-y-4 text-slate-600">
+      <Section index="02" title="A scan you run once is a scan you stop running.">
+        <Note>
+          Exit code 1 on findings at or above your threshold. JSON output for
+          anything else you want to do with it.
+        </Note>
+        <Prose>
+          <p>
+            Most scanners in this category are a one-time moment: paste a URL,
+            get a score, forget about it. Your app changes every deploy. So does
+            its public surface.
+          </p>
+        </Prose>
+        <div className="mt-7 max-w-[36rem]">
+          <Figure index="2" caption="The whole CI integration.">
+            <pre className="overflow-x-auto bg-plate p-4 font-mono text-[0.8rem] leading-[1.8] text-paper">
+{`name: security
+on: [push]
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pip install ${BRAND.cmd}
+      - run: ${BRAND.cmd} https://myapp.com --fail-on high`}
+            </pre>
+          </Figure>
+        </div>
+      </Section>
+
+      <Section
+        index="03"
+        id="calibration"
+        title={
+          <>
+            Every other scanner tells you how many checks it runs. We tell you
+            how often we are <em className="text-flag">wrong</em>.
+          </>
+        }
+      >
+        <Prose>
           <p>
             A security scanner that cries wolf gets ignored, and an ignored
             scanner is worth nothing.
@@ -208,58 +264,37 @@ export default function HomePage() {
           </p>
           <p>
             The clearest example: a Supabase anon key and a{" "}
-            <code className="font-mono text-sm">service_role</code> key are both
-            JWTs with the same shape. We decode the role claim rather than
-            pattern-matching, so we never flag the anon key — which is public by
-            design and not a leak. Most scanners get this wrong.
+            <Code>service_role</Code> key are both JWTs with the same shape. We
+            decode the role claim rather than pattern-matching, so we never flag
+            the anon key — which is public by design and not a leak. Most
+            scanners get this wrong.
           </p>
           <p>
             The false-positive rate will be published with the methodology and
             the sample set.
           </p>
+        </Prose>
+        <Link
+          href="/methodology"
+          className="label mt-7 inline-block bg-ink px-5 py-3 text-paper transition-colors hover:bg-flag"
+        >
+          Read the methodology →
+        </Link>
+        <div className="mt-4 max-w-[36rem]">
           <Todo>
-            Not measured yet — that is M4 calibration. No number can appear here
-            until it is, and the sentence above must not become a claim before
-            then. METHODOLOGY.md does not exist, so the CTA below has nowhere to
-            go.
+            The rate itself is not measured yet — that is M4 calibration. No
+            number can appear here or on the methodology page until it is, and
+            the sentence above must not become a claim before then.
           </Todo>
         </div>
-      </section>
+      </Section>
 
-      {/* CI */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          A scan you run once is a scan you stop running.
-        </h2>
-        <p className="mt-3 max-w-2xl text-slate-600">
-          Most scanners in this category are a one-time moment: paste a URL, get
-          a score, forget about it. Your app changes every deploy. So does its
-          public surface.
-        </p>
-
-        <pre className="mt-6 max-w-2xl overflow-x-auto rounded-md border border-slate-800 bg-slate-900 p-4 font-mono text-xs leading-relaxed text-slate-100">
-{`name: security
-on: [push]
-jobs:
-  scan:
-    runs-on: ubuntu-latest
-    steps:
-      - run: pip install ${BRAND.cmd}
-      - run: ${BRAND.cmd} https://myapp.com --fail-on high`}
-        </pre>
-
-        <p className="mt-4 max-w-2xl text-slate-600">
-          Exit code 1 on findings at or above your threshold. JSON output for
-          anything else you want to do with it.
-        </p>
-      </section>
-
-      {/* Limits */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          What this scanner cannot tell you
-        </h2>
-        <div className="mt-4 max-w-2xl space-y-4 text-slate-600">
+      <Section index="04" id="limits" title="What this scanner cannot tell you">
+        <Note>
+          We would rather tell you where the edges are than sell you a number
+          that does not mean what you think it means.
+        </Note>
+        <Prose>
           <p>
             Passive scanning cannot prove your Row Level Security is actually
             enforced. That needs a live read against your database. The report
@@ -270,19 +305,11 @@ jobs:
             It also cannot see route-level code loaded lazily at runtime, or
             anything behind a login.
           </p>
-          <p>
-            We would rather tell you where the edges are than sell you a number
-            that does not mean what you think it means.
-          </p>
-        </div>
-      </section>
+        </Prose>
+      </Section>
 
-      {/* Legality */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          Is it OK to scan an app I do not own?
-        </h2>
-        <div className="mt-4 max-w-2xl space-y-4 text-slate-600">
+      <Section index="05" title="Is it OK to scan an app I do not own?">
+        <Prose>
           <p>
             The passive checks fetch only what the server already sends to every
             visitor — the same requests your browser makes when you load the
@@ -295,7 +322,7 @@ jobs:
           </p>
           <p>
             One thing we ask:{" "}
-            <strong className="font-semibold text-slate-900">
+            <strong className="font-medium text-ink">
               do not scan someone&apos;s app and then contact them to sell them
               something.
             </strong>{" "}
@@ -303,16 +330,17 @@ jobs:
             extortion-shaped no matter how good your intentions are. If you find
             something real by accident, tell them privately and give them time.
           </p>
-          <Todo>Acceptable use policy page does not exist yet.</Todo>
-        </div>
-      </section>
+        </Prose>
+        <Link
+          href="/acceptable-use"
+          className="label mt-7 inline-block bg-ink px-5 py-3 text-paper transition-colors hover:bg-flag"
+        >
+          Read the acceptable use policy →
+        </Link>
+      </Section>
 
-      {/* Open source */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          You can read every check that produced your score.
-        </h2>
-        <div className="mt-4 max-w-2xl space-y-4 text-slate-600">
+      <Section index="06" title="You can read every check that produced your score.">
+        <Prose>
           <p>
             This whole scanner is {BRAND.license} on GitHub. There is a
             deliberately vulnerable test app in the repo — run the scanner
@@ -320,78 +348,70 @@ jobs:
             before you trust it on anything real.
           </p>
           <p>Scanning is free forever. That is not a trial.</p>
-        </div>
+        </Prose>
         <a
           href={GITHUB_URL}
-          className="mt-5 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+          className="label mt-7 inline-block bg-ink px-5 py-3 text-paper transition-colors hover:bg-flag"
         >
-          View on GitHub →
+          View on GitHub ↗
         </a>
-      </section>
+      </Section>
 
-      {/* Hosted */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          When a customer asks for a security review
-        </h2>
-        <p className="mt-4 max-w-2xl text-slate-600">
-          Finding problems is the free part. {BRAND.name} Cloud is for what comes
-          next: history that shows what regressed between deploys, fixes written
-          against your actual schema rather than generic advice, and a verifiable
-          badge you can put in front of a customer who is asking whether you are
-          safe to buy from.
-        </p>
-        <div className="mt-4">
+      <Section index="07" title="When a customer asks for a security review">
+        <Prose>
+          <p>
+            Finding problems is the free part. {BRAND.name} Cloud is for what
+            comes next: history that shows what regressed between deploys, fixes
+            written against your actual schema rather than generic advice, and a
+            verifiable badge you can put in front of a customer who is asking
+            whether you are safe to buy from.
+          </p>
+        </Prose>
+        <div className="mt-5 max-w-[36rem]">
           <Todo>
             Needs an email capture that actually stores the address. Not built —
             per the spec, do not fake a checkout or a signup.
           </Todo>
         </div>
-      </section>
+      </Section>
 
-      {/* FAQ */}
-      <section className="border-t border-slate-200 py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          Questions
-        </h2>
-        <div className="mt-6 max-w-3xl divide-y divide-slate-200 border-y border-slate-200">
+      <Section index="08" title="Questions">
+        <div className="max-w-[36rem] divide-y divide-rule border-t border-rule">
           {FAQ.map((item) => (
             <details key={item.q} className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
-                {item.q}
-                <svg
-                  className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-90"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden
-                >
-                  <path d="M6 4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 [&::-webkit-details-marker]:hidden">
+                <h3 className="text-[1.02rem] font-medium text-ink transition-colors group-hover:text-flag">
+                  {item.q}
+                </h3>
+                <span className="label shrink-0 text-faint transition-colors group-open:text-flag">
+                  <span className="group-open:hidden">+</span>
+                  <span className="hidden group-open:inline">&minus;</span>
+                </span>
               </summary>
-              <div className="mt-2 text-sm text-slate-600">{item.a}</div>
+              <div className="mt-2.5 text-[0.95rem] leading-[1.65] text-ink-soft">
+                {item.a}
+              </div>
             </details>
           ))}
         </div>
-      </section>
+      </Section>
 
-      {/* Platforms */}
-      <section className="border-t border-slate-200 py-12">
-        <p className="text-sm text-slate-500">
-          Platform guides:{" "}
-          {PLATFORMS.map((platform, index) => (
-            <span key={platform.slug}>
-              <Link
-                href={`/p/${platform.slug}`}
-                className="font-medium text-slate-700 underline underline-offset-4 hover:text-slate-900"
-              >
-                {platform.name}
-              </Link>
-              {index < PLATFORMS.length - 1 ? ", " : ""}
-            </span>
-          ))}
-        </p>
+      <section className="border-t border-rule py-12">
+        <Shell>
+          <p className="label text-faint">Platform guides</p>
+          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+            {PLATFORMS.map((platform) => (
+              <li key={platform.slug}>
+                <Link
+                  href={`/p/${platform.slug}`}
+                  className="font-mono text-xs text-ink underline decoration-rule-firm underline-offset-4 transition-colors hover:text-flag"
+                >
+                  {platform.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Shell>
       </section>
     </div>
   );
