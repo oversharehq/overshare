@@ -76,17 +76,29 @@ All three are required. Set only some and nothing is sent — half-configured is
 treated as unconfigured on purpose, because Mailgun answers an unknown domain
 with a 404 that looks nothing like a credentials problem.
 
-Mail goes out from the Mailgun sending domain, not from `oversharehq.com`. That
-is deliberate: the domain's SPF record ends in `-all` and does not list Mailgun,
-so sending from it would be dropped silently. To send from your own domain you
-must add Mailgun's `include:` to SPF *first*, verify the domain in Mailgun, and
-only then set `OVERSHARE_NOTIFY_SENDER`.
+Production sends from `mg.oversharehq.com`, a subdomain verified in Mailgun with
+its own SPF and DKIM. A subdomain rather than the apex on purpose: the apex SPF
+ends in `-all` and is load-bearing for existing mail, so it stays untouched, and
+sending reputation is isolated from it.
 
-**Mailgun sandbox domains only deliver to authorised recipients.** A fresh
-account gets `sandboxXXXX.mailgun.org`, and mail to anything else is accepted by
-the API and then never arrives. Add your own address under Sending → Domains →
-your sandbox → Authorized Recipients, and confirm the verification email, before
-concluding this is broken.
+**Never point `OVERSHARE_NOTIFY_SENDER` at a domain Mailgun is not verified
+for.** The API accepts the message and returns 200, and the receiver then
+quarantines or drops it. Nothing in the logs indicates a problem.
+
+**Sandbox domains cannot deliver to your inbox.** `mailgun.org` publishes
+`p=quarantine`, which every `sandboxXXXX.mailgun.org` inherits, so Gmail
+quarantines the mail no matter what — it is delivered to spam and the Mailgun
+event says `delivered ... DMARC:Quarantine`. Sandbox also only sends to
+addresses confirmed under Authorized Recipients. Both are inherent to sandbox
+domains and neither is fixable by configuration; verify a real domain instead.
+
+**DKIM records break in a specific way worth knowing.** The value is ~400
+characters of base64, and copying it through anything that soft-wraps injects
+spaces at the wrap points. Base64 gives no visual cue that a space is wrong, so
+it looks correct and fails verification with `valid=unknown`. Copy from
+Mailgun's own clipboard button. A correct record *does* appear in `dig` as two
+quoted strings — TXT records split at 255 characters and resolvers rejoin them,
+which is not corruption.
 
 If the Mailgun domain was created in the EU region, set
 `OVERSHARE_MAILGUN_BASE_URL=https://api.eu.mailgun.net/v3` — the US endpoint

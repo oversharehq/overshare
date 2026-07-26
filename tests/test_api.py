@@ -435,9 +435,10 @@ def test_waitlist_notification_sends_when_configured(client, monkeypatch):
     # Mailgun authenticates with HTTP Basic, username literally "api".
     assert sent[0]["auth"] == ("api", "test-key")
     assert sent[0]["data"]["to"] == "owner@example.com"
-    # Not @oversharehq.com: that domain's SPF ends in -all and does not list
-    # Mailgun, so mail sent from it would be dropped silently.
-    assert "oversharehq.com" not in sent[0]["data"]["from"]
+    # The default sender must sit on the domain Mailgun is configured for, and
+    # never on some other domain that Mailgun is not authorised to send as —
+    # that mail is accepted by the API and then quarantined by the receiver.
+    assert sent[0]["data"]["from"].endswith("@sandbox.mailgun.org>")
     assert "signup@example.com" in sent[0]["data"]["text"]
 
 

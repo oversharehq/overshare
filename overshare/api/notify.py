@@ -33,9 +33,11 @@ def notify_waitlist_signup(email: str) -> None:
         return
 
     base_url = os.environ.get("OVERSHARE_MAILGUN_BASE_URL", DEFAULT_BASE_URL)
-    # Defaults to the sending domain, not oversharehq.com. That domain's SPF
-    # ends in -all and does not list Mailgun, so mail from it would be dropped
-    # silently — the hardest failure mode to notice.
+    # Derived from the Mailgun domain rather than hardcoded, so the sender is
+    # always a domain Mailgun is actually authorised for. Overriding this with
+    # an unverified domain — the apex, say, whose SPF ends in -all and does not
+    # list Mailgun — gets the mail accepted by the API and then quarantined or
+    # dropped by the receiver, which is the hardest failure mode to notice.
     sender = os.environ.get(
         "OVERSHARE_NOTIFY_SENDER", f"Overshare <postmaster@{domain}>"
     )
