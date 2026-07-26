@@ -3,7 +3,8 @@
 A primer. `OVERVIEW.md` is the reference you check while working; this is the
 thing you read once, front to back, to hold the whole system in your head.
 
-Written 2026-07-25. Where something is a plan rather than a fact, it says so.
+Written 2026-07-25, revised 2026-07-26 when it went live. Where something is a
+plan rather than a fact, it says so.
 
 ---
 
@@ -270,34 +271,60 @@ a provider runtime, a job table over a message bus. Nothing here is hard to move
 
 ## 6. What is actually real today
 
-Honest inventory, because a plan and a running system are easy to conflate.
+Honest inventory, because a plan and a running system are easy to conflate. This
+section was rewritten on 2026-07-26, the day it stopped being a plan.
 
-**Real and verified.** The scanner: 27 checks, 17 secret patterns, 231 tests. The
-API, the job store, the retention purge. The frontend and the proxy between them,
-exercised end to end. Process-isolated workers, checked against a live API. SARIF
-output, validated against the official schema. The GitHub Action, which runs
-itself in CI on every push. Docker images for both services.
+**Live, in production, verified against the real thing.** `oversharehq.com` and
+`www.` serve over valid TLS from two Fly apps in Sydney. The scan API sits on
+Fly's private network with no public address at all — the browser only ever talks
+to the frontend's own origin, which proxies server-side. A scan submitted through
+the production domain queues, runs in an isolated process, and completes in about
+fifteen seconds. `pip install overshare` installs 0.1.0 from PyPI and scans a live
+site. The repository is public, tagged `v1`, with CI green on five jobs and
+private vulnerability reporting enabled.
 
-**Real but unproven.** The Fly deployment configuration exists and nothing has
-ever been deployed with it. The Action's SARIF *upload* step has never executed,
-because the repository is private and the upload API is unavailable there.
+**The scanner, unchanged in character.** 27 checks, 17 secret patterns, 253 tests.
+SSRF rejection, rate limiting, the retention purge, the production mock guard, the
+error taxonomy, SARIF against the official 2.1.0 schema.
 
-The rendered UI is no longer among these. On 2026-07-25 the frontend was restyled
-as a technical document rather than a dashboard — paper, serif prose, mono data,
-rules instead of cards — because the thing being sold is published calibration
-and the page should look like something measured. Every surface was then checked
-in a real browser at desktop and phone widths, and the report was checked under
-print emulation, since that is the artifact a customer is handed. Chrome only;
-Safari and Firefox are still unlooked at.
+**It passes its own audit.** Scanning `oversharehq.com` with `overshare` returns
+A (92). That is not vanity: a scanner whose own site fails its own report has a
+credibility problem that no amount of documentation repairs. One finding remains —
+no Content-Security-Policy — and it is deliberate rather than overlooked. A CSP
+worth having needs per-request nonces, which in Next means dynamic rendering
+everywhere; a CSP with `'unsafe-inline'` would trip our own `csp_weak` check and
+trade a finding for a finding. Leaving it visible is the honest option.
 
-**Not built.** Row-level-security testing — every Supabase report currently says
-so explicitly rather than implying a pass. Generated fixes: the `fix` field
-exists in the API contract and is always `null`. Scan history, deltas, badges,
-scheduling, accounts, billing — the entire paid product. Email capture for the
-waitlist. Any network-level egress control.
+**The site is deliberately invisible.** Every page carries `noindex`, the sitemap
+is empty, and `robots.txt` advertises nothing. The gate is a build arg that fails
+closed. This is not caution about quality — the product works — it is that the
+one claim worth making has not been measured yet, and being indexed before it
+exists means ranking for a pitch identical to every competitor's.
 
-**Not decided.** Nothing is deployed and no domain is bought. The trademark
-search has not been run, which is why the repository is still private.
+**Real but still unproven.** The Action's SARIF *upload* step: the repository is
+public now, so it is finally testable, and it has not been tested. Volume
+restores: Fly snapshots daily and nobody has ever restored one. Safari and
+Firefox: everything visual was checked in Chrome.
+
+**Not built.** Row-level-security testing — every Supabase report says so
+explicitly rather than implying a pass. Generated fixes: the `fix` field exists in
+the contract and is always `null`. Scan history, deltas, badges, scheduling,
+accounts, billing — the entire paid product. Any network-level egress control.
+Analytics, deliberately, until there is traffic to measure.
+
+**The waitlist is real.** `POST /v1/waitlist` stores signups outside the retention
+sweep, because a scan is a vulnerability report with a shelf life while a signup is
+consent to be contacted. A repeat signup returns a byte-identical response, so the
+endpoint cannot be used to test whether a given person uses the product. Mailgun
+notifies the operator from a verified subdomain.
+
+**Settled since the last revision.** The trademark knockout searches came back
+clear in both jurisdictions — the one prior US `OVERSHARE` mark was an
+intent-to-use filing abandoned in 2020, conferring nothing. That is a knockout
+search and not a clearance opinion, and the moment to pay an attorney is before
+money changes hands.
+
+**The one thing left before launch is calibration.** Not a feature. A number.
 
 ---
 
@@ -322,8 +349,11 @@ something, then email them offering a fix. That is extortion-shaped regardless
 of intent, and it creates a written record. `ACCEPTABLE_USE.md` is the boundary
 and it is not decorative.
 
-**A rename after launch.** Which is the entire reason the repository is private
-tonight.
+**A rename after launch.** This is why the repository stayed private, and the
+knockout searches clearing in both jurisdictions is what let it go public. The
+risk is smaller now but not zero: a knockout search is not a clearance opinion,
+and a security brand that rebrands after acquiring users loses the trust that is
+the product.
 
 ---
 

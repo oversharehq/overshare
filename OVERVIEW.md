@@ -16,7 +16,7 @@ their own slice.
 | The original plan and legal boundaries | `overshare-build-brief.md` |
 | Why the product is called Overshare | `marketing/01-naming.md` |
 
-Last updated 2026-07-25.
+Last updated 2026-07-26 — the day it went live. See §6 for what is real and §8 for what comes next.
 
 ---
 
@@ -346,158 +346,165 @@ which is surprising the first time it happens.
 
 ## 6. Where things stand
 
+Last updated 2026-07-26, the day it went live.
+
 | Milestone | State |
 |---|---|
-| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 231 tests. |
+| **M1 — passive scanner core** | Done. 27 checks, 17 secret patterns, 253 tests. |
 | **M2 — RLS check (Tier B)** | Not started. Reports currently say RLS was *not* tested. |
-| **M3 — deploy + UI** | Done. Live on `oversharehq.com` since 2026-07-26, `noindex` until M4. |
-| **CI channel** | Action and SARIF done. Usable only once the repo is public and `v1` is tagged. |
-| **M4 — calibration** | Not started. This is the differentiator. |
-| **M5 — paid tier** | Not started. `fix` field exists in the contract and is always null. |
+| **M3 — deploy + UI** | Done and live on `oversharehq.com`. |
+| **CI channel** | Done and usable. Repo public, `v1` tagged. |
+| **Distribution** | Done. `pip install overshare` works — 0.1.0 on PyPI. |
+| **M4 — calibration** | **Not started. This is the only thing standing between here and launch.** |
+| **M5 — paid tier** | Not started. `fix` in the contract is always null. Waitlist captures demand. |
 
-**The repo exists and is private.** `oversharehq/overshare`, pushed 2026-07-25, CI green on four
-jobs (scanner on 3.11 and 3.12, frontend, and the Action running itself via `uses: ./`). Private
-on purpose until the trademark search clears: deleting an unseen private repo is free, and
-un-publishing an indexed public one is not.
+### What is live
 
-**Naming** was resolved on 2026-07-25: Overshare, command `overshare`, domain `oversharehq.com`,
-GitHub org `oversharehq`. Plain `overshare` on GitHub is an org since 2013 holding OvershareKit, a
-dormant iOS library — different category, so a mild search nuisance rather than a rename trigger.
-`overshare` is free on PyPI and npm, which is what matters for a CLI. Evidence in
-`marketing/01-naming.md`.
+- **`https://oversharehq.com`** and `www.`, valid certificates, on two Fly apps in `syd`. The API
+  has no public address, as designed.
+- **The site is `noindex`.** `NEXT_PUBLIC_INDEXABLE` is a build arg in `web/fly.toml`, read via
+  `web/lib/site.ts`, and it gates the robots meta, the sitemap and the `Sitemap:` line together.
+  It compares against the literal `"true"`, so a missing or misspelled value fails closed.
+- **`github.com/oversharehq/overshare` is public**, tagged `v1` and `v0.1.0`, CI green on five
+  jobs. Private vulnerability reporting is enabled, so `SECURITY.md` points somewhere real.
+- **`overshare` 0.1.0 on PyPI**, verified by installing into a clean venv and scanning the live
+  site.
+- **Waitlist capture** at `POST /v1/waitlist`, with Mailgun notifications from the verified
+  subdomain `mg.oversharehq.com`.
 
-**Verified working:** CLI, API, frontend and the proxy between them, all exercised against the
-bundled vulnerable app. SSRF rejection, rate limiting, the production mock guard, and the error
-taxonomy have all been tested over HTTP. Process-isolated workers were verified end to end through
-the live API, and the SARIF output validates against the official 2.1.0 schema.
+### What has actually been verified, not just written
 
-**The UI has now been looked at.** On 2026-07-25 the frontend was redesigned onto the document
-treatment described in §3.3 and §4, and every surface was rendered in a real browser: landing page,
-both policy pages, a platform page, a live scan report from the fixture backend, and the report
-again under print emulation. Checked at 1280px and at 390px with a scripted probe asserting zero
-elements overflow the viewport, which caught a genuine mobile overflow (the hero grid sizing to the
-command block's `min-content`). The print path was verified to hide the site chrome and to expand
-every collapsed finding, so a printed report cannot silently omit one.
+- The full stack end to end **through the production domain**: submit, queue, run, complete.
+- **The site scores A (92) against its own scanner.** One finding remains, the missing CSP, and it
+  is deliberate — see §7.
+- The CLI installed **from PyPI** into a clean environment, scanning the live site.
+- `noindex` confirmed in the built output *and* on the live response, in both flag states.
+- The waitlist path end to end, including a Mailgun `delivered ... 2.0.0 OK` with no DMARC verdict.
+- SSRF rejection, rate limiting, the production mock guard, the error taxonomy, process-isolated
+  workers, and SARIF against the official 2.1.0 schema.
 
-**Not verified:** Safari and Firefox — everything above was Chrome. Nothing has ever been deployed, so
-`DEPLOY.md` is written from the configs rather than from a deploy that happened — expect to correct
-it on the first run. The Action's SARIF *upload* step is also unexercised: this repo is private and
-has no Advanced Security, so the upload API is unavailable until it goes public.
+### Not verified
+
+- **Safari and Firefox.** Everything visual was checked in Chrome only.
+- **The Action's SARIF upload step.** The repo is public now, so this is finally testable; it has
+  not been run.
+- **Volume restore.** Fly takes daily snapshots and none has ever been restored.
 
 ---
 
 ## 7. Open items
 
-### Blocking anything public
+### The one that matters
 
-**Trademark search.** IP Australia and USPTO TESS, classes 9 and 42. `Oversecured` — an existing
-mobile app vulnerability scanner — is the closest risk. This is the only outstanding item that can
-force another rename, and a security brand that rebrands mid-flight loses the trust it spent
-months building.
+**M4 calibration is not started, and everything else is waiting on it.** The site is `noindex`
+precisely because the false-positive rate is unmeasured. `METHODOLOGY.md` has a deliberately empty
+section, and `tests/test_docs_sync.py` fails the build if a percentage appears there before the
+run. This is not a documentation gap — it is the product's only uncontested differentiator, and
+until it exists there is a finished product that cannot honestly be advertised.
 
-**The repo is private, so every public link is dead.** "View on GitHub" 404s to anyone but you,
-`pip install overshare` isn't real, `uses: oversharehq/overshare@v1` cannot resolve, and the whole
-open-core position rests on a repo nobody can read. Flipping it public and tagging `v1` is one
-command each — it waits on the trademark search, nothing else.
+### Known and accepted
 
-### Before real traffic
+**No Content-Security-Policy on the site.** Every other security header is set. A useful CSP needs
+a per-request nonce, and Next can only inject nonces during server-side rendering, so every page
+would become dynamically rendered. A CSP carrying `'unsafe-inline'` would trip our own
+`transport.header.csp_weak` check — swapping one finding for another and calling it a fix. Reasoning
+lives in `web/next.config.ts`. **Do not "resolve" this by adding a weak CSP.**
 
-**Deployed 2026-07-26.** Live on `oversharehq.com` and `www.`, both with valid certificates, on
-two Fly apps in `syd` — the API private with no public address, as designed. The site is
-`noindex` (`NEXT_PUBLIC_INDEXABLE`, a build arg) until M4 produces a real false-positive rate and
-the `todo` markers are gone. `DEPLOY.md` now describes a deploy that happened; read its "Things
-that will bite" before the next one.
+**No egress control.** Workers run in separate processes, which bounds a crash to one scan, but
+that is blast-radius containment and not a sandbox. Fly has no per-app outbound firewall, so the
+SSRF guard in `fetch/ssrf.py` is the only thing constraining where a scan can reach. Real egress
+control means routing worker traffic through a proxy we run.
 
-**No Content-Security-Policy on the site.** Every other header is set, and the site scores A (92)
-against its own scanner. A useful CSP needs a per-request nonce, which in Next means dynamic
-rendering on every page; a CSP with `'unsafe-inline'` instead would trip our own
-`transport.header.csp_weak` check. Deliberately deferred rather than faked — see
-`web/next.config.ts`.
+**Single-machine by construction.** SQLite on one volume. `fly scale count` above 1 splits the job
+table across machines and polls start 404ing. Scaling out means Postgres first; `store.py` was
+written for that swap and it has not been done.
 
-**SPF on `oversharehq.com` ends in `?all`**, GoDaddy's default, which tells receivers to do
-nothing about spoofed mail. DMARC is `p=quarantine`. Tighten to `-all` before launch.
+**No analytics.** Deliberate — decided 2026-07-26 to wait until the site is indexable, since there
+is no traffic to measure. The conversions that matter are already first-party rows in `scans` and
+`waitlist`, and the key metric (repeat scans per app after 30 days) can only come from `scans`.
 
-**No egress control.** Workers now run in separate processes, which bounds a crash to one scan, but
-that is blast-radius containment and not a sandbox. Fly has no per-app outbound firewall, so what
-actually constrains where a scan can reach is the SSRF guard alone. Real egress control means
-routing worker traffic through a proxy we run. Not built — `DEPLOY.md` §"What this does not give
-you".
+**Trademark: knockout searches only.** USPTO and IP Australia both came back clear on 2026-07-26
+(the one prior US `OVERSHARE` mark was abandoned in 2020). That is not a clearance opinion, and the
+point to pay an attorney is before a monetised launch.
+
+**Customer-facing email does not exist.** `mg.oversharehq.com` is set up for notifications *to the
+operator*. The eventual "Cloud is ready" send to the waitlist is a different problem with different
+tooling.
 
 ### Content debt
 
-TODO markers are visible on the landing page. They're written so the surrounding sentence stays
-true if the marker is deleted — no invented statistics — but they must not ship:
+All four `todo` markers are gone from the site. The `Todo` component is kept with no call sites on
+purpose: it is the mechanism for flagging copy that outruns its evidence, and the false-positive
+rate is the obvious next candidate.
 
-- No measured false-positive rate (needs M4). `METHODOLOGY.md` and `/methodology` both document the
-  method and the blind spots with the rate itself explicitly unmeasured, and
-  `tests/test_docs_sync.py` fails if a percentage appears there before the calibration run. The one
-  remaining marker on the landing page guards exactly this.
-- No working email capture for the hosted waitlist.
-- `marketing/03-readme.md` and `04-landing-page.md` still show a raw `pip install` in a workflow
-  rather than the Action.
-
-Resolved on 2026-07-25: the acceptable use policy now has a route (`/acceptable-use`, linked from
-the landing page and the footer), the methodology CTA points at `/methodology` instead of nowhere,
-and the retention FAQ carries the real 30-day answer. Three of the five markers are gone; the two
-above are the ones left.
-
-Also: `marketing/00-strategy.md §1` competitive claims come from vendor self-description and
-vendor-authored roundups. They haven't been independently checked.
+Still outstanding: `marketing/03-readme.md` and `04-landing-page.md` show a raw `pip install` in a
+workflow rather than the Action. And `marketing/00-strategy.md §1` competitive claims come from
+vendor self-description and vendor-authored roundups; they have not been independently checked.
 
 ---
 
-## 8. Next steps, in order
+## 8. Next steps
 
-Steps 1–3 need accounts and a credit card, so they are yours and they gate everything else. They
-are also about an hour in total. Nothing downstream can start until step 1 clears.
+The build is done. **The next unit of work is not a feature.** Resist adding one.
 
-1. **Trademark search.** IP Australia and USPTO TESS, classes 9 and 42. `Oversecured` is the
-   closest risk; add a cheap check on OvershareKit's author while you're in there. This is the only
-   remaining item that can force another rename, which is why the repo is still private.
+### The default path
 
-2. **Buy the names.** `oversharehq.com` (unregistered as of 2026-07-25, confirmed by RDAP), plus
-   `overshare` on PyPI and npm. A package name is more painful to lose than a domain. Cloudflare
-   Registrar sells domains at cost with free WHOIS privacy.
+1. **M4 calibration.** 15–25 hours against 20–30 real apps, every finding verified by hand, every
+   false positive either fixed or the pattern withdrawn. Then fill in the empty section of
+   `METHODOLOGY.md` with the rate, the sample and the date. Needs no infrastructure:
 
-3. **Go public.** Flip `oversharehq/overshare` to public, tag `v1`, cut the PyPI release. Also set
-   the org's display name to `Overshare` — it's currently empty, so the profile reads
-   `oversharehq`. This is what makes the Action usable and every "View on GitHub" resolve.
+   ```bash
+   overshare https://someapp.com --json --output runs/someapp.json
+   ```
 
-Then, in rough order of what the strategy depends on:
+   The brief splits this in two. Tier A calibrates against third-party apps, but **Tier B cannot** —
+   the RLS check may not legally be pointed at apps you do not own, so it needs a corpus of 8–12
+   apps you build yourself with deliberately varied RLS states. See `overshare-build-brief.md §4`.
 
-4. **Deploy.** `DEPLOY.md` is the runbook: two Fly apps, the API private with no public address.
-   Read the "Things that will bite" section first — `NEXT_PUBLIC_SITE_URL` is baked at build time,
-   and getting it wrong publishes a live site whose sitemap advertises localhost.
+2. **Flip `NEXT_PUBLIC_INDEXABLE` to `"true"` and rebuild.** This is the launch. It is one config
+   change and it is gated entirely on step 1.
 
-5. **M4 calibration.** 15–25 hours against 20–30 real apps, verifying every finding by hand, then
-   fill in the empty section of `METHODOLOGY.md` with the rate, the sample and the date. The only
-   uncontested differentiator. Note the brief splits this in two: Tier A calibrates against
-   third-party apps, but **Tier B cannot** — the RLS check may not legally be pointed at apps you
-   don't own, so it needs a corpus of 8–12 apps you build yourself with deliberately varied RLS
-   states. See `overshare-build-brief.md §4`.
-
-6. **M2 — the RLS check.** The highest-value check in the product; every Supabase report currently
-   says it wasn't tested. Deliberately after calibration: adding a new class of detection before
+3. **M2 — the RLS check.** The highest-value check in the product; every Supabase report currently
+   says it was not tested. Deliberately *after* calibration: adding a new class of detection before
    calibrating the existing ones compounds exactly the failure mode we care most about. Encode the
    Tier B discipline structurally — a client that *cannot* issue a bulk read, rather than one that
-   merely doesn't.
+   merely does not.
 
-7. **Egress control**, if the hosted scan is taking real traffic by then.
+4. **M5 — the paid tier**, once repeat scans show the free tier is being used more than once.
 
-Running alongside all of it: the twenty validation conversations in the build brief §11, and
-running competitors' free scans to correct the strategy doc. Neither needs code.
+### Decisions worth making deliberately
 
-### If you want to start with code tomorrow
+These are genuine forks, not a checklist. Each trades something real.
 
-Steps 1–3 are errands, and 4 needs an account. The first thing that is pure building is **M4
-calibration** — and it needs no infrastructure at all, just the CLI and a list of real apps:
+**How much calibration is enough before launching?** Twenty to thirty apps is the plan, and it is
+15–25 hours. Ten apps would take a weekend and give a number with a wide error bar. The tradeoff is
+that a published false-positive rate is a claim you have to defend, and defending it from a sample
+of ten is harder than saying nothing. Recommendation: do not shortcut the number that is the entire
+differentiator.
 
-```bash
-overshare https://someapp.com --json --output runs/someapp.json
-```
+**Launch quietly or loudly?** Flipping `INDEXABLE` is a quiet launch — search engines find it
+eventually and nothing else happens. A loud launch (Show HN, r/webdev, the vibe-coding communities)
+converts far better but spends a one-time card, and spending it before calibration means launching
+on the same undifferentiated free-scan pitch as the other thirteen. Recommendation: quiet first,
+loud once the rate exists.
 
-Every finding verified by hand, every false positive either fixed or the pattern withdrawn. It is
-the slowest item on this list and the one everything else is marketing for.
+**CSP now or later?** Doing it properly means nonces and dynamic rendering on every page. On Fly
+there is no CDN in front, so the practical cost is milliseconds rather than a cold start — this is
+cheaper than it looks. Against that: it is invisible to users and does not move the launch.
+Recommendation: after calibration, before any real traffic.
+
+**RLS check before or after launch?** It is the highest-value check and its absence is stated in
+every Supabase report. Building it first makes the product materially better; building it after
+means launching with a known hole. But it needs its own calibration corpus, so it is not a small
+job. Recommendation: after launch, unless early users say RLS is the reason they will not pay.
+
+**Do the validation conversations happen at all?** The brief calls for twenty. They need no code,
+they are the only thing that tests the *pricing*, and they are the easiest item to quietly skip.
+
+### Running alongside all of it
+
+The twenty validation conversations in the build brief §11, and running competitors' free scans to
+correct `marketing/00-strategy.md`. Neither needs code, and both change what is worth building.
 
 ---
 

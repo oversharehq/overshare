@@ -215,6 +215,50 @@ decorative.
 
 ---
 
+## What it costs to run
+
+Rates are Fly's published prices for `syd` as of 2026-07-26. Check the dashboard
+rather than trusting this table after it ages.
+
+| Resource | Spec | Rate | Monthly |
+|---|---|---|---|
+| `overshare-api` | 1 × `shared-cpu-1x` 1GB | $6.46 | **$6.46** |
+| `overshare-web` | 2 × `shared-cpu-1x` 512MB | $3.62 each | **$7.24** |
+| Volume `overshare_data` | 1GB provisioned | $0.15/GB | **$0.15** |
+| Shared IPv4 + Anycast IPv6 | — | included | **$0.00** |
+| **Fly subtotal** | | | **≈ $13.85/mo** |
+
+Outbound bandwidth is $0.04/GB in Asia Pacific and rounds to nothing at current
+traffic — 10GB/month would add $0.40. A dedicated IPv4 would be $2/month; we use
+the shared one, which is why the frontend is reachable at all without paying for
+it.
+
+Off Fly: the domain is roughly $20–25/year at GoDaddy, PyPI and GitHub are free,
+and Mailgun depends on the plan — the free allowance covers a waitlist many times
+over, but adding a second custom domain is what forces a paid tier.
+
+**Roughly $14/month, plus about $2/month amortised for the domain.**
+
+### Where the money actually goes, if you want it lower
+
+**The second web machine is half the bill.** Fly adds it for zero-downtime
+deploys regardless of `min_machines_running = 1`, which is a floor and not a cap.
+Dropping to one machine saves $3.62/month and costs you a few seconds of 503s on
+each deploy. At zero traffic that is a fair trade; at real traffic it is not.
+
+**`auto_stop_machines = "off"` is a deliberate purchase.** Scaling the frontend to
+zero would cut most of its cost, and the comment in `web/fly.toml` explains why we
+do not: a cold start on the landing page is paid by exactly the visitor you least
+want to lose. That is a marketing decision, not a technical one, and it is worth
+revisiting only if the bill starts mattering more than first paint.
+
+**The API's 1GB is sized for `OVERSHARE_MAX_WORKERS = 2`.** Peak memory is roughly
+the API plus two scan interpreters. 512MB would save $2.84/month and is genuinely
+tight — the failure mode is an OOM kill mid-scan, which surfaces to a user as a
+scan that never completes.
+
+---
+
 ## What this does *not* give you
 
 **Egress filtering.** I said earlier this could be expressed in `fly.toml`; it
